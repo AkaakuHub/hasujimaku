@@ -2,10 +2,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import GlobalStyle from "@/lib/GlobalStyle";
+import GlobalStyle from "../../lib/GlobalStyle";
+import "@fontsource/klee-one/400.css";
 
+import React from "react";
 import { useEffect, useState } from 'react';
-import { Input, Button, TextField } from '@mui/material';
+import { Input, Button, Switch, FormControlLabel } from '@mui/material';
 
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -23,18 +25,22 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DownloadIcon from '@mui/icons-material/Download';
 import IosShareIcon from '@mui/icons-material/IosShare';
 
-import Header from '@/components/header/header';
-import Footer from "@/components/footer/footer";
+import Header from '../../components/header/header';
+import Footer from "../../components/footer/footer";
 
 import 'react-image-crop/dist/ReactCrop.css'
 
-import { queryType, offsetType } from '@/types';
+import { queryType, offsetType } from "../../types";
 
-import styles from './style.module.scss';
+import styles from "./style.module.scss";
 import clsx from 'clsx';
 
 // import { SelectPicture } from '@/components/SelectPicture';
-import CropApp from '@/components/crop/App';
+import CropApp from '../../components/crop/App';
+
+import ImageCanvas from '../../components/imageCanvas/ImageCanvas';
+
+// import CustomToggle from '../../components/customToggle/CustomToggle';
 
 // import CollapseComponent from '@/components/collapse/Collapse';
 
@@ -59,6 +65,8 @@ export default function Page() {
   // const [fontName, setFontName] = useState<string>(fontList[0]);
 
   const [isFetching, setIsFetching] = useState<boolean>(false);
+
+  const [isRenderLocal, setIsRenderLocal] = useState<boolean>(true);
 
   const fetchData = async () => {
     setIsFetching(true);
@@ -108,13 +116,6 @@ export default function Page() {
   useEffect(() => {
     changeThemeColor();
   }, []);
-
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [draweCollapse, setDraweCollapse] = useState(false);
-
-  const handleClick = () => {
-    setDraweCollapse(c => !c);
-  };
 
   return (
     <>
@@ -187,6 +188,9 @@ export default function Page() {
                       }
                       const newQueryData = { ...queryData, "quote": e.target.value };
                       setQueryData(newQueryData);
+                      setQueryData(oldQueryData => {
+                        return oldQueryData;
+                      });
                     }}
                     sx={{
                       fontFamily: '"Klee One"!important',
@@ -203,8 +207,11 @@ export default function Page() {
                     placeholder="名前を入力"
                     value={queryData.name}
                     onChange={(e) => {
-                      const newQueryData = { ...queryData, "name": e.target.value };
-                      setQueryData(newQueryData);
+                      // const newQueryData = { ...queryData, "name": e.target.value };
+                      // setQueryData(newQueryData);
+                      setQueryData(oldQueryData => {
+                        return { ...oldQueryData, "name": e.target.value };
+                      });
                     }}
                     sx={{
                       fontFamily: '"Klee One"!important',
@@ -213,35 +220,64 @@ export default function Page() {
                   />
                 </div>
                 <br />
-                <span>セリフは2行まで</span>
+                <p>※セリフは2行まで</p>
                 <br />
+                {
+                  baseImageBase64 === "" && (
+                    <p>まず、画像を選択してください。</p>
+                  )
+                }
               </CardContent>
-              {
-                baseImageBase64 === "" && (
-                  <p>まず、画像を選択してください。</p>
-                )
-              }
               <CardActions>
-                <div
-                  className={styles["button-container"]}
-                >
-                  <Button onClick={() => fetchData()}
-                    disabled={baseImageBase64 === "" || isFetching}
-                    variant='contained'
-                    size='large'
-                  >
-                    <PlayArrowIcon />
-                    <p>
-                      画像を作成
-                    </p>
-                  </Button>
-                  {isFetching ?
-                    <Box sx={{ display: 'flex' }} className={styles["loading-icon-container"]}
-                    >
-                      <CircularProgress />
-                    </Box> : null}
+                <div className={styles["button-container"]}>
+                  <div className={styles["select-container-row1"]}>
+                    <span className={styles["local-rendering-label"]}>
+                      ローカルでレンダリング(問題がある場合はOffにしてください。)
+                    </span>
+                    {/* <CustomToggle name="ローカルでレンダリングするかを切り替えるボタン" disabled={isFetching}
+                      label={isRenderLocal ? 'On' : 'Off'} checked={isRenderLocal} onChange={() => setIsRenderLocal(c => !c)} /> */}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={isRenderLocal}
+                          onChange={() => setIsRenderLocal(c => !c)}
+                          name="ローカルでレンダリングするかを切り替えるボタン"
+                          color="primary"
+                          disabled={isFetching}
+                        />
+                      }
+                      label={isRenderLocal ? 'On' : 'Off'}
+                    // sx={{
+                    //   fontFamily: '"Klee One"!important',
+                    //   fontWeight: '400!important',
+                    // }}
+                    />
+                  </div>
+                  <div className={styles["select-container-row2"]}>
+                    {!isRenderLocal && (
+                      <Button
+                        onClick={() => fetchData()}
+                        disabled={baseImageBase64 === "" || isFetching}
+                        variant='contained'
+                        size='large'
+                        className={styles["generate-button"]}
+                      >
+                        <PlayArrowIcon />
+                        <p>画像を作成</p>
+                      </Button>
+                    )}
+                    {isFetching ? (
+                      <Box sx={{ display: 'flex' }} className={styles["loading-icon-container"]}>
+                        <CircularProgress />
+                      </Box>
+                    ) : (
+                      <div className={styles["loading-icon-container"]}
+                      ></div>
+                    )}
+                  </div>
                 </div>
               </CardActions>
+
             </div>
           </Card>
           <Card sx={{
@@ -255,6 +291,12 @@ export default function Page() {
               <img src={resultImageUrl} alt="Generated Image"
                 className={clsx(styles["generated-image"], isFetching && styles["image-dark"])}
               />
+              {isRenderLocal && (
+                <ImageCanvas baseImageBase64={baseImageBase64} quote={queryData.quote} name={queryData.name}
+                  setResultImageUrl={setResultImageUrl}
+                  setIsFetching={setIsFetching}
+                />
+              )}
               <div className={styles["result-button-container"]}
               >
                 <a href={isFetching || resultImageUrl === "/card.png" ? undefined : resultImageUrl} download="hasunosora_jimaku.png">

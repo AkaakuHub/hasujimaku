@@ -5,13 +5,13 @@ import Container from "@mui/material/Container";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-import GlobalStyle from "@/lib/GlobalStyle";
+import GlobalStyle from "../../lib/GlobalStyle";
 
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
 import Modal from '@mui/material/Modal';
 
-import CustomLink from "@/components/customButton/CustomButton";
+import CustomLink from "../../components/customButton/CustomButton";
 
 type Props = {
   themeName: string;

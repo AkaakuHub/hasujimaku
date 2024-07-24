@@ -1,5 +1,5 @@
 "use client";
-import GlobalStyle from "@/lib/GlobalStyle";
+import GlobalStyle from "../../lib/GlobalStyle";
 
 import react from 'react';
 import { useEffect, useState } from 'react';

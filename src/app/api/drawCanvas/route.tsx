@@ -8,9 +8,9 @@ import React from "react";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 
-import { loadGoogleFont } from '@/lib/font';
+import { loadGoogleFont } from '../../../lib/font';
 
-import { queryType, offsetType } from '@/types';
+import { queryType, offsetType } from '../../../types';
 
 export async function POST(req: NextRequest) {
   try {

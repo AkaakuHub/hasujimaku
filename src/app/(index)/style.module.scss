@@ -47,14 +47,31 @@
 }
 
 .button-container{
-  display: flex;
   margin-top: 1em;
 }
 
-.loading-icon-container{
-  margin-left: 10px;
+.local-rendering-label{
+  margin-right: 10px;
 }
 
+.loading-icon-container{
+  display: flex;
+  width: 40px;
+  height: 40px;
+}
+
+.generate-button{
+  margin-right: 1em;
+}
+
+// .select-container-row1{
+//   margin-bottom: 5.74px;margin-bottommargin-bottom
+// }
+
+.select-container-row2{
+  display: flex;
+  height: 40px;
+}
 
 .footer-container{
   bottom: 0;
@@ -64,7 +81,6 @@
 .result-container{
   display: flex;
   flex-direction: column;
-  gap: 2em;
   align-items: center;
   padding: 2em;
 }
