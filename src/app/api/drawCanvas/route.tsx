@@ -1,16 +1,16 @@
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
-import fs from 'fs'
-import path from 'path'
+import fs from "fs"
+import path from "path"
 
 import React from "react";
 
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 
-import { loadGoogleFont } from '../../../lib/font';
+import { loadGoogleFont } from "../../../lib/font";
 
-import { queryType, offsetType } from '../../../types';
+import { queryType, offsetType } from "../../../types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,9 +33,9 @@ export async function POST(req: NextRequest) {
       const result = fs.readFileSync(fontArrayBuffer1Path);
       fontArrayBuffer = result.buffer;
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error("Error:", error);
       fontArrayBuffer = await loadGoogleFont({
-        family: 'Klee One',
+        family: "Klee One",
         weight: 400,
       });
     }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     // 保存するときはこれ使う
 
     // const fontArrayBuffer3 = await loadGoogleFont({
-    //   family: 'Cherry Bomb One',
+    //   family: "Cherry Bomb One",
     //   weight: 400,
     // });
 
@@ -64,32 +64,32 @@ export async function POST(req: NextRequest) {
     //       const x = (Math.cos(angle) * size).toFixed(2);
     //       const y = (Math.sin(angle) * size).toFixed(2);
     //       return `${x}px ${y}px 0 #121311`;
-    //     }).join(', ')
-    //   ).join(', ')}
+    //     }).join(", ")
+    //   ).join(", ")}
     // `,
 
-    if (!quote.includes('\n')) {
+    if (!quote.includes("\n")) {
       return new ImageResponse(
         (<>
           {/* @ts-ignore */}
           <img src={baseImageBase64} width={1920} height={1080} />
           <div
             style={{
-              position: 'absolute',
-              top: '83%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: "absolute",
+              top: "83%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "90%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
             <div
               style={{
-                fontFamily: 'Klee One',
-                fontSize: '52px',
-                color: '#dbdbdb',
+                fontFamily: "Klee One",
+                fontSize: "52px",
+                color: "#dbdbdb",
                 textShadow: `
           ${[3, 2.5, 2, 1.5, 1, 0.5].map(size =>
                   [...Array(16)].map((_, i) => {
@@ -97,16 +97,16 @@ export async function POST(req: NextRequest) {
                     const x = (Math.cos(angle) * size).toFixed(2);
                     const y = (Math.sin(angle) * size).toFixed(2);
                     return `${x}px ${y}px 0 #121311`;
-                  }).join(', ')
-                ).join(', ')}
+                  }).join(", ")
+                ).join(", ")}
         `,
-                textAlign: 'center',
-                textWrap: 'wrap',
-                overflowWrap: 'break-word',
-                lineHeight: '0.9',
-                letterSpacing: '0.2px',
-                position: 'relative',
-                left: '2.5px',
+                textAlign: "center",
+                textWrap: "wrap",
+                overflowWrap: "break-word",
+                lineHeight: "0.9",
+                letterSpacing: "0.2px",
+                position: "relative",
+                left: "2.5px",
               }}
             >
               {quote}
@@ -114,10 +114,10 @@ export async function POST(req: NextRequest) {
           </div>
           <div
             style={{
-              fontFamily: 'Klee One',
-              fontSize: '38px',
-              position: 'absolute',
-              color: '#dbdbdb',
+              fontFamily: "Klee One",
+              fontSize: "38px",
+              position: "absolute",
+              color: "#dbdbdb",
               textShadow: `
               ${[3, 2.5, 2, 1.5, 1, 0.5].map(size =>
                 [...Array(16)].map((_, i) => {
@@ -125,13 +125,13 @@ export async function POST(req: NextRequest) {
                   const x = (Math.cos(angle) * size).toFixed(2);
                   const y = (Math.sin(angle) * size).toFixed(2);
                   return `${x}px ${y}px 0 #121311`;
-                }).join(', ')
-              ).join(', ')}
+                }).join(", ")
+              ).join(", ")}
             `,
-              top: '91.5%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
+              top: "91.5%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              textAlign: "center",
             }}
           >
             {`[${name}]`}
@@ -142,9 +142,9 @@ export async function POST(req: NextRequest) {
           height: 1080,
           fonts: [
             {
-              name: 'Klee One',
+              name: "Klee One",
               data: fontArrayBuffer,
-              style: 'normal',
+              style: "normal",
               weight: 400,
             },
           ]
@@ -152,8 +152,8 @@ export async function POST(req: NextRequest) {
       );
     } else {
       // 改行で、無理やり2行にする
-      const line1: string = quote.split('\n')[0];
-      const line2: string = quote.split('\n')[1];
+      const line1: string = quote.split("\n")[0];
+      const line2: string = quote.split("\n")[1];
 
       return new ImageResponse(
         (<>
@@ -161,21 +161,21 @@ export async function POST(req: NextRequest) {
           <img src={baseImageBase64} width={1920} height={1080} />
           <div
             style={{
-              position: 'absolute',
-              top: '77%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: "absolute",
+              top: "77%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "90%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
             <div
               style={{
-                fontFamily: 'Klee One',
-                fontSize: '52px',
-                color: '#dbdbdb',
+                fontFamily: "Klee One",
+                fontSize: "52px",
+                color: "#dbdbdb",
                 textShadow: `
           ${[3, 2.5, 2, 1.5, 1, 0.5].map(size =>
                   [...Array(16)].map((_, i) => {
@@ -183,14 +183,14 @@ export async function POST(req: NextRequest) {
                     const x = (Math.cos(angle) * size).toFixed(2);
                     const y = (Math.sin(angle) * size).toFixed(2);
                     return `${x}px ${y}px 0 #121311`;
-                  }).join(', ')
-                ).join(', ')}
+                  }).join(", ")
+                ).join(", ")}
         `,
-                textAlign: 'center',
-                lineHeight: '0.9',
-                letterSpacing: '0.4px',
-                position: 'relative',
-                left: '5px',
+                textAlign: "center",
+                lineHeight: "0.9",
+                letterSpacing: "0.4px",
+                position: "relative",
+                left: "5px",
               }}
             >
               {line1}
@@ -198,21 +198,21 @@ export async function POST(req: NextRequest) {
           </div>
           <div
             style={{
-              position: 'absolute',
-              top: '83%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '90%',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              position: "absolute",
+              top: "83%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "90%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
             <div
               style={{
-                fontFamily: 'Klee One',
-                fontSize: '52px',
-                color: '#dbdbdb',
+                fontFamily: "Klee One",
+                fontSize: "52px",
+                color: "#dbdbdb",
                 textShadow: `
           ${[3, 2.5, 2, 1.5, 1, 0.5].map(size =>
                   [...Array(16)].map((_, i) => {
@@ -220,14 +220,14 @@ export async function POST(req: NextRequest) {
                     const x = (Math.cos(angle) * size).toFixed(2);
                     const y = (Math.sin(angle) * size).toFixed(2);
                     return `${x}px ${y}px 0 #121311`;
-                  }).join(', ')
-                ).join(', ')}
+                  }).join(", ")
+                ).join(", ")}
         `,
-                textAlign: 'center',
-                lineHeight: '0.9',
-                letterSpacing: '0.4px',
-                position: 'relative',
-                left: '5px',
+                textAlign: "center",
+                lineHeight: "0.9",
+                letterSpacing: "0.4px",
+                position: "relative",
+                left: "5px",
               }}
             >
               {line2}
@@ -235,10 +235,10 @@ export async function POST(req: NextRequest) {
           </div>
           <div
             style={{
-              fontFamily: 'Klee One',
-              fontSize: '38px',
-              position: 'absolute',
-              color: '#dbdbdb',
+              fontFamily: "Klee One",
+              fontSize: "38px",
+              position: "absolute",
+              color: "#dbdbdb",
               textShadow: `
               ${[3, 2.5, 2, 1.5, 1, 0.5].map(size =>
                 [...Array(16)].map((_, i) => {
@@ -246,13 +246,13 @@ export async function POST(req: NextRequest) {
                   const x = (Math.cos(angle) * size).toFixed(2);
                   const y = (Math.sin(angle) * size).toFixed(2);
                   return `${x}px ${y}px 0 #121311`;
-                }).join(', ')
-              ).join(', ')}
+                }).join(", ")
+              ).join(", ")}
             `,
-              top: '91.5%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
+              top: "91.5%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              textAlign: "center",
             }}
           >
             {`[${name}]`}
@@ -263,9 +263,9 @@ export async function POST(req: NextRequest) {
           height: 1080,
           fonts: [
             {
-              name: 'Klee One',
+              name: "Klee One",
               data: fontArrayBuffer,
-              style: 'normal',
+              style: "normal",
               weight: 400,
             },
           ]
@@ -275,7 +275,7 @@ export async function POST(req: NextRequest) {
 
   }
   catch (error: any) {
-    console.error('Error:', error);
-    return new Response('Internal server error', { status: 500 });
+    console.error("Error:", error);
+    return new Response("Internal server error", { status: 500 });
   }
 }

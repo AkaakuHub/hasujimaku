@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 interface ImageCanvasProps {
   baseImageBase64: string;
@@ -22,7 +22,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
       }
 
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       if (!context) {
         return;
       }
@@ -56,9 +56,9 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.drawImage(baseImage, 0, 0, 1920, 1080);
 
-        context.font = '52px Klee One';
-        context.fillStyle = '#edecec';
-        context.textAlign = 'center';
+        context.font = "52px Klee One";
+        context.fillStyle = "#e6e6e6";
+        context.textAlign = "center";
 
         const textX: number = canvas.width / 2;
         let nameY: number = 0;
@@ -66,7 +66,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
         const renderTextShadow = (text: string, x: number, y: number) => {
           const sizes = [3, 2.5, 2, 1.5, 1, 0.5];
           sizes.forEach(size => {
-            context.shadowColor = '#121311';
+            context.shadowColor = "#121311";
             [...Array(16)].forEach((_, i) => {
               const angle = i * (Math.PI / 8);
               const shadowX = (Math.cos(angle) * size).toFixed(2);
@@ -81,7 +81,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
         };
 
         // const renderText = (text: string, x: number, y: number, letterSpacing = 0) => {
-        //   const characters = text.split('');
+        //   const characters = text.split("");
         //   let currentX = x - (context.measureText(text).width / 2);
         //   characters.forEach((char, index) => {
         //     context.fillText(char, currentX, y);
@@ -89,13 +89,13 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
         //   });
         // };
 
-        if (!quote.includes('\n')) { // 1行の場合
+        if (!quote.includes("\n")) { // 1行の場合
           const textY = canvas.height * 0.855;
           renderTextShadow(quote, textX, textY);
           context.fillText(quote, textX, textY);
           nameY = canvas.height * 0.932;
         } else {
-          const [line1, line2] = quote.split('\n');
+          const [line1, line2] = quote.split("\n");
           const textY1 = canvas.height * 0.8;
           const textY2 = canvas.height * 0.856;
           renderTextShadow(line1, textX, textY1);
@@ -105,7 +105,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
           nameY = canvas.height * 0.94;
         }
 
-        context.font = '38px Klee One';
+        context.font = "38px Klee One";
         renderTextShadow(`[${name}]`, textX, nameY);
         context.fillText(`[${name}]`, textX, nameY);
 
@@ -129,12 +129,15 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
       };
     };
 
-    generateImage();
+    // generateImage();
+    document.fonts.ready.then(() => {
+      generateImage();
+    });
   }, [baseImageBase64, quote, name, setResultImageUrl, setIsFetching]);
 
   return (
     <div>
-      <canvas ref={canvasRef} width="1920" height="1080" style={{ display: 'none' }}></canvas>
+      <canvas ref={canvasRef} width="1920" height="1080" style={{ display: "none" }}></canvas>
     </div>
   );
 };

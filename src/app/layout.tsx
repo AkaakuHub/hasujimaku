@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const siteName: string = "活動記録 字幕ジェネレーター";
 const description: string = "活動記録の字幕風の画像を作成することができるサイトです。";

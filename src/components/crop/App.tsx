@@ -4,7 +4,7 @@ import ImageUploading, { ImageListType, ImageType } from "react-images-uploading
 import Cropper, { Area } from "react-easy-crop";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { cropImage } from "./cropUtils";
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Slider } from "@mui/material";
 
 
@@ -121,10 +121,10 @@ const App: FC<Props> = ({
         zoom={zoom}
         setZoom={setZoom}
         open={dialogOpen}
-        image={image.length > 0 ? image[0].dataURL as string : ''}
+        image={image.length > 0 ? image[0].dataURL as string : ""}
         onComplete={(imagePromise) => {
           imagePromise.then((image) => {
-            if (image === null || image === '') return;
+            if (image === null || image === "") return;
             setCroppedImage(image); // base64で入ってる、ラッキー
             setBaseImageBase64(image);
             setDialogOpen(false);

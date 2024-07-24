@@ -6,43 +6,43 @@ import GlobalStyle from "../../lib/GlobalStyle";
 import "@fontsource/klee-one/400.css";
 
 import React from "react";
-import { useEffect, useState } from 'react';
-import { Input, Button, Switch, FormControlLabel } from '@mui/material';
+import { useEffect, useState } from "react";
+import { Input, Button, Switch, FormControlLabel } from "@mui/material";
 
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import CardHeader from '@mui/material/CardHeader';
-import Typography from '@mui/material/Typography';
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import CardContent from "@mui/material/CardContent";
+import CardHeader from "@mui/material/CardHeader";
+import Typography from "@mui/material/Typography";
 
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import DownloadIcon from '@mui/icons-material/Download';
-import IosShareIcon from '@mui/icons-material/IosShare';
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import DownloadIcon from "@mui/icons-material/Download";
+import IosShareIcon from "@mui/icons-material/IosShare";
 
-import Header from '../../components/header/header';
+import Header from "../../components/header/header";
 import Footer from "../../components/footer/footer";
 
-import 'react-image-crop/dist/ReactCrop.css'
+import "react-image-crop/dist/ReactCrop.css"
 
 import { queryType, offsetType } from "../../types";
 
 import styles from "./style.module.scss";
-import clsx from 'clsx';
+import clsx from "clsx";
 
-// import { SelectPicture } from '@/components/SelectPicture';
-import CropApp from '../../components/crop/App';
+// import { SelectPicture } from "@/components/SelectPicture";
+import CropApp from "../../components/crop/App";
 
-import ImageCanvas from '../../components/imageCanvas/ImageCanvas';
+import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
 
-// import CustomToggle from '../../components/customToggle/CustomToggle';
+// import CustomToggle from "../../components/customToggle/CustomToggle";
 
-// import CollapseComponent from '@/components/collapse/Collapse';
+// import CollapseComponent from "@/components/collapse/Collapse";
 
 export default function Page() {
   const [queryData, setQueryData] = useState<queryType>({
@@ -70,10 +70,10 @@ export default function Page() {
 
   const fetchData = async () => {
     setIsFetching(true);
-    const response = await fetch('/api/drawCanvas', {
-      method: 'POST',
+    const response = await fetch("/api/drawCanvas", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         queryData: queryData,
@@ -82,7 +82,7 @@ export default function Page() {
     });
 
     if (!response.ok) {
-      console.error('Failed to fetch image data');
+      console.error("Failed to fetch image data");
       setIsFetching(false);
       return;
     }
@@ -183,7 +183,7 @@ export default function Page() {
                     value={queryData.quote}
                     onChange={(e) => {
                       // 改行(\n)は2行まで。
-                      if (e.target.value.split('\n').length > 2) {
+                      if (e.target.value.split("\n").length > 2) {
                         return;
                       }
                       const newQueryData = { ...queryData, "quote": e.target.value };
@@ -193,8 +193,8 @@ export default function Page() {
                       });
                     }}
                     sx={{
-                      fontFamily: '"Klee One"!important',
-                      fontWeight: '400!important',
+                      fontFamily: "'Klee One'!important",
+                      fontWeight: "400!important",
                     }}
                   />
                 </div>
@@ -214,8 +214,8 @@ export default function Page() {
                       });
                     }}
                     sx={{
-                      fontFamily: '"Klee One"!important',
-                      fontWeight: '400!important',
+                      fontFamily: "'Klee One'!important",
+                      fontWeight: "400!important",
                     }}
                   />
                 </div>
@@ -235,7 +235,7 @@ export default function Page() {
                       ローカルでレンダリング(問題がある場合はOffにしてください。)
                     </span>
                     {/* <CustomToggle name="ローカルでレンダリングするかを切り替えるボタン" disabled={isFetching}
-                      label={isRenderLocal ? 'On' : 'Off'} checked={isRenderLocal} onChange={() => setIsRenderLocal(c => !c)} /> */}
+                      label={isRenderLocal ? "On" : "Off"} checked={isRenderLocal} onChange={() => setIsRenderLocal(c => !c)} /> */}
                     <FormControlLabel
                       control={
                         <Switch
@@ -246,10 +246,10 @@ export default function Page() {
                           disabled={isFetching}
                         />
                       }
-                      label={isRenderLocal ? 'On' : 'Off'}
+                      label={isRenderLocal ? "On" : "Off"}
                     // sx={{
-                    //   fontFamily: '"Klee One"!important',
-                    //   fontWeight: '400!important',
+                    //   fontFamily: ""Klee One"!important",
+                    //   fontWeight: "400!important",
                     // }}
                     />
                   </div>
@@ -258,8 +258,8 @@ export default function Page() {
                       <Button
                         onClick={() => fetchData()}
                         disabled={baseImageBase64 === "" || isFetching}
-                        variant='contained'
-                        size='large'
+                        variant="contained"
+                        size="large"
                         className={styles["generate-button"]}
                       >
                         <PlayArrowIcon />
@@ -267,7 +267,7 @@ export default function Page() {
                       </Button>
                     )}
                     {isFetching ? (
-                      <Box sx={{ display: 'flex' }} className={styles["loading-icon-container"]}>
+                      <Box sx={{ display: "flex" }} className={styles["loading-icon-container"]}>
                         <CircularProgress />
                       </Box>
                     ) : (
@@ -300,14 +300,14 @@ export default function Page() {
               <div className={styles["result-button-container"]}
               >
                 <a href={isFetching || resultImageUrl === "/card.png" ? undefined : resultImageUrl} download="hasunosora_jimaku.png">
-                  <Button variant="contained" color='success'
+                  <Button variant="contained" color="success"
                     disabled={isFetching || resultImageUrl === "/card.png"}
                   >
                     <DownloadIcon />
                     画像をダウンロード
                   </Button>
                 </a>
-                <Button variant="contained" color='info'
+                <Button variant="contained" color="info"
                   disabled={isFetching || resultImageUrl === "/card.png"}
                   onClick={async () => {
                     const text: string = "活動記録 字幕ジェネレーターで作成した画像です。"
