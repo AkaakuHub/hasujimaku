@@ -57,7 +57,7 @@ const blobToDataURL = (blob: Blob): Promise<string> =>
 export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onError: (error: Error) => void): Promise<string | undefined> => {
   if (typeof window !== "undefined") {
     try {
-      console.log("image", image);
+      console.log("imageBefore", image);
       const heic2any = (await import("heic2any")).default;
       if (image.startsWith("data:image/heic") || image.startsWith("data:image/heif")) {
         const blob = await heic2any({
@@ -67,7 +67,9 @@ export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onE
         // imageを、新しいblobで上書き
         if (!Array.isArray(blob)) {
           image = await blobToDataURL(blob);
+          console.log("imageAfter", image);
         }
+        console.log("check2");
       }
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
       return croppedImage;
