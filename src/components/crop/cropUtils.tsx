@@ -1,3 +1,5 @@
+import heic2any from 'heic2any';
+
 type PixelCrop = {
   width: number;
   height: number;
@@ -15,6 +17,15 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
   });
 
 const convertToPng = async (imageSrc: string): Promise<string> => {
+  if (imageSrc.startsWith("data:image/heic") || imageSrc.startsWith("data:image/heif")) {
+    const blob = await heic2any({
+      blob: await fetch(imageSrc).then((r) => r.blob()),
+      toType: "image/png",
+    });
+    if (!Array.isArray(blob)) {
+      return URL.createObjectURL(blob);
+    }
+  }
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
