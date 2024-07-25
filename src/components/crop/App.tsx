@@ -3,7 +3,7 @@ import React, { useState, FC } from "react";
 import ImageUploading, { ImageListType, ImageType } from "react-images-uploading";
 import Cropper, { Area } from "react-easy-crop";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
-import { cropImage } from "./cropUtils";
+import { CropImage } from "./cropUtils";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Slider } from "@mui/material";
 
@@ -93,7 +93,7 @@ const ImageCropper: FC<ImageCropperProps> = ({
           color="primary"
           onClick={() =>
             // @ts-ignore
-            onComplete(cropImage(image, croppedAreaPixels ?? {}, console.log))
+            onComplete(CropImage(image, croppedAreaPixels ?? {}, console.log))
           }
         >
           決定
