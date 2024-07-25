@@ -46,9 +46,18 @@ async function getCroppedImg(imageSrc: string, pixelCrop: PixelCrop): Promise<st
   return canvas.toDataURL("image/jpeg");
 }
 
+const blobToDataURL = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
 export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onError: (error: Error) => void): Promise<string | undefined> => {
   if (typeof window !== "undefined") {
     try {
+      console.log("image", image);
       const heic2any = (await import("heic2any")).default;
       if (image.startsWith("data:image/heic") || image.startsWith("data:image/heif")) {
         const blob = await heic2any({
@@ -57,7 +66,7 @@ export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onE
         });
         // imageを、新しいblobで上書き
         if (!Array.isArray(blob)) {
-          image = URL.createObjectURL(blob);
+          image = await blobToDataURL(blob);
         }
       }
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
