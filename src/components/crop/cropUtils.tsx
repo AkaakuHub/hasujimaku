@@ -46,14 +46,6 @@ async function getCroppedImg(imageSrc: string, pixelCrop: PixelCrop): Promise<st
   return canvas.toDataURL("image/jpeg");
 }
 
-const blobToDataURL = (blob: Blob): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-
 export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onError: (error: Error) => void): Promise<string | undefined> => {
   if (typeof window !== "undefined") {
     try {
@@ -62,19 +54,36 @@ export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onE
       // アップロード時にdata:image:jpegになっていたが、
       // それでも正しく表示されていない
       // なので、iosかつdata:image/jpegの場合は、heic2anyで変換する
-      if (image.startsWith("data:image/heic") || image.startsWith("data:image/heif") || image.startsWith("data:image/jpeg")) {
-        // iosでないなら戻る
-        if (!navigator.userAgent.match(/(iPhone|iPad|iPod)/)) return;
+      const HEIC_MAGIC_HEADERS: string[] = ["ftypmif1", "ftypmsf1", "ftypheic", "ftypheix", "ftyphevc", "ftyphevx"];
+      // imageはbase64形式なのでimagebufferに変換して判定する
+      const imageBuffer = Buffer.from(image, "base64");
+      const heicRange = imageBuffer.slice(4, 12);
+
+      const heicRangeHeader = heicRange.reduce(
+        (acc, byte) => acc += String.fromCharCode(byte),
+        ""
+      );
+
+      const isHeic = HEIC_MAGIC_HEADERS.includes(heicRangeHeader);
+
+      if (isHeic) {
         const heic2any = (await import("heic2any")).default;
         const blob = await heic2any({
           blob: await fetch(image).then((r) => r.blob()),
           toType: "image/png",
         });
         // imageを、新しいblobで上書き
-        // if (!Array.isArray(blob)) {
-        //   image = await blobToDataURL(blob);
-        //   alert(`imageAfter: ${image}`);
-        // }
+        if (!Array.isArray(blob)) {
+          // imageのbase64を更新する
+          image = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve(reader.result as string);
+            };
+            reader.readAsDataURL(blob);
+          });
+          // alert(`imageAfter: ${image}`);
+        }
         // alert(`imageAfter: ${image}`);
       }
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
