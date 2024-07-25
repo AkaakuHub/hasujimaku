@@ -58,8 +58,14 @@ export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onE
   if (typeof window !== "undefined") {
     try {
       alert(`imageBefore: ${image}`);
-      const heic2any = (await import("heic2any")).default;
-      if (image.startsWith("data:image/heic") || image.startsWith("data:image/heif")) {
+      // iphoneで、heic形式の画像を読み込むための処理
+      // アップロード時にdata:image:jpegになっていたが、
+      // それでも正しく表示されていない
+      // なので、iosかつdata:image/jpegの場合は、heic2anyで変換する
+      if (image.startsWith("data:image/heic") || image.startsWith("data:image/heif") || image.startsWith("data:image/jpeg")) {
+        // iosでないなら戻る
+        if (!navigator.userAgent.match(/(iPhone|iPad|iPod)/)) return;
+        const heic2any = (await import("heic2any")).default;
         const blob = await heic2any({
           blob: await fetch(image).then((r) => r.blob()),
           toType: "image/png",
