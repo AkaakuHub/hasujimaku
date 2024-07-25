@@ -14,6 +14,20 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
+const convertToPng = async (imageSrc: string): Promise<string> => {
+  const image = await createImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("Unable to create 2d context");
+
+  canvas.width = image.width;
+  canvas.height = image.height;
+
+  ctx.drawImage(image, 0, 0);
+  return canvas.toDataURL("image/png");
+};
+
 async function getCroppedImg(imageSrc: string, pixelCrop: PixelCrop): Promise<string> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -48,6 +62,9 @@ async function getCroppedImg(imageSrc: string, pixelCrop: PixelCrop): Promise<st
 
 export const cropImage = async (image: string, croppedAreaPixels: PixelCrop, onError: (error: Error) => void): Promise<string | undefined> => {
   try {
+    if (!image.startsWith("data:image/jpeg") && !image.startsWith("data:image/png")) {
+      image = await convertToPng(image);
+    }
     const croppedImage = await getCroppedImg(image, croppedAreaPixels);
     return croppedImage;
   } catch (err) {
