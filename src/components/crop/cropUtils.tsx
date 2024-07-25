@@ -17,6 +17,7 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
   });
 
 const convertToPng = async (imageSrc: string): Promise<string> => {
+  if (typeof (window) === 'undefined') return imageSrc;
   if (imageSrc.startsWith("data:image/heic") || imageSrc.startsWith("data:image/heif")) {
     const blob = await heic2any({
       blob: await fetch(imageSrc).then((r) => r.blob()),
