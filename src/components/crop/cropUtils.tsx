@@ -57,7 +57,7 @@ const blobToDataURL = (blob: Blob): Promise<string> =>
 export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onError: (error: Error) => void): Promise<string | undefined> => {
   if (typeof window !== "undefined") {
     try {
-      alert(`imageBefore: ${image}`);
+      // alert(`imageBefore: ${image}`);
       // iphoneで、heic形式の画像を読み込むための処理
       // アップロード時にdata:image:jpegになっていたが、
       // それでも正しく表示されていない
@@ -71,11 +71,11 @@ export const CropImage = async (image: string, croppedAreaPixels: PixelCrop, onE
           toType: "image/png",
         });
         // imageを、新しいblobで上書き
-        if (!Array.isArray(blob)) {
-          image = await blobToDataURL(blob);
-          alert(`imageAfter: ${image}`);
-        }
-        alert(`imageAfter: ${image}`);
+        // if (!Array.isArray(blob)) {
+        //   image = await blobToDataURL(blob);
+        //   alert(`imageAfter: ${image}`);
+        // }
+        // alert(`imageAfter: ${image}`);
       }
       const croppedImage = await getCroppedImg(image, croppedAreaPixels);
       return croppedImage;
