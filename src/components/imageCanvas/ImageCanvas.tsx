@@ -10,9 +10,13 @@ interface ImageCanvasProps {
   setIsFetching: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ImageCanvas: React.FC<ImageCanvasProps> = (
-  { baseImageBase64, quote, name, setResultImageUrl, setIsFetching }
-) => {
+const ImageCanvas: React.FC<ImageCanvasProps> = ({
+  baseImageBase64,
+  quote,
+  name,
+  setResultImageUrl,
+  setIsFetching,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isRendering = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -65,7 +69,8 @@ const ImageCanvas: React.FC<ImageCanvasProps> = (
         const textX: number = canvas.width / 2;
         let nameY: number = 0;
 
-        if (!quote.includes("\n")) { // 1行の場合
+        if (!quote.includes("\n")) {
+          // 1行の場合
           const textY = canvas.height * 0.855;
           drawTextWithOutline(context, quote, textX, textY);
           nameY = canvas.height * 0.932;

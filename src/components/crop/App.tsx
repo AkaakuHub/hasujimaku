@@ -1,30 +1,30 @@
-/* eslint-disable @next/next/no-img-element */
-import React, { useState, FC } from "react";
-import ImageUploading, { ImageListType, ImageType } from "react-images-uploading";
+import { useState, type FC } from "react";
+import ImageUploading, { type ImageListType } from "react-images-uploading";
 import Cropper, { Area } from "react-easy-crop";
-import { Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  type ButtonProps,
+} from "@mui/material";
 import { CropImage } from "./cropUtils";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import { Slider } from "@mui/material";
 
-
 import styles from "./style.module.scss";
 
-interface ImageUploadingButtonProps {
+interface ImageUploadingButtonProps extends Omit<ButtonProps, "onChange" | "value"> {
   value: ImageListType;
   onChange: (image: ImageListType) => void;
-  [x: string]: any;
 }
 
 const ImageUploadingButton: FC<ImageUploadingButtonProps> = ({ value, onChange, ...props }) => {
   return (
     <ImageUploading value={value} onChange={onChange}>
       {({ onImageUpload, onImageUpdate }) => (
-        <Button
-          color="primary"
-          onClick={value ? onImageUpload : () => onImageUpdate(0)}
-          {...props}
-        >
+        <Button color="primary" onClick={value ? onImageUpload : () => onImageUpdate(0)} {...props}>
           <FileUploadIcon />
           画像を選択
         </Button>
@@ -38,9 +38,8 @@ interface ImageCropperProps {
   setZoom: (zoom: number) => void;
   open: boolean;
   image: string;
-  onComplete: (image: Promise<string>) => void;
+  onComplete: (image: string) => void;
   containerStyle: React.CSSProperties;
-  [x: string]: any;
 }
 
 const ImageCropper: FC<ImageCropperProps> = ({
@@ -50,7 +49,6 @@ const ImageCropper: FC<ImageCropperProps> = ({
   image,
   onComplete,
   containerStyle,
-  ...props
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -73,7 +71,6 @@ const ImageCropper: FC<ImageCropperProps> = ({
               setCroppedAreaPixels(croppedAreaPixels);
             }}
             onZoomChange={setZoom}
-            {...props}
           />
         </div>
         <Slider
@@ -91,10 +88,17 @@ const ImageCropper: FC<ImageCropperProps> = ({
       <DialogActions>
         <Button
           color="primary"
-          onClick={() =>
-            // @ts-ignore
-            onComplete(CropImage(image, croppedAreaPixels ?? {}, console.log))
-          }
+          onClick={() => {
+            if (!croppedAreaPixels) {
+              return;
+            }
+
+            CropImage(image, croppedAreaPixels).then((croppedImage) => {
+              if (croppedImage) {
+                onComplete(croppedImage);
+              }
+            });
+          }}
         >
           決定
         </Button>
@@ -105,11 +109,9 @@ const ImageCropper: FC<ImageCropperProps> = ({
 
 interface Props {
   setBaseImageBase64: (image: string) => void;
-};
+}
 
-const App: FC<Props> = ({
-  setBaseImageBase64,
-}) => {
+const App: FC<Props> = ({ setBaseImageBase64 }) => {
   const [image, setImage] = useState<ImageListType>([]);
   const [croppedImage, setCroppedImage] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -121,14 +123,11 @@ const App: FC<Props> = ({
         zoom={zoom}
         setZoom={setZoom}
         open={dialogOpen}
-        image={image.length > 0 ? image[0].dataURL as string : ""}
-        onComplete={(imagePromise) => {
-          imagePromise.then((image) => {
-            if (image === null || image === "") return;
-            setCroppedImage(image); // base64で入ってる、ラッキー
-            setBaseImageBase64(image);
-            setDialogOpen(false);
-          });
+        image={image.length > 0 ? (image[0].dataURL as string) : ""}
+        onComplete={(croppedImage) => {
+          setCroppedImage(croppedImage);
+          setBaseImageBase64(croppedImage);
+          setDialogOpen(false);
         }}
         containerStyle={{
           position: "relative",
@@ -150,6 +149,6 @@ const App: FC<Props> = ({
       />
     </div>
   );
-}
+};
 
 export default App;
