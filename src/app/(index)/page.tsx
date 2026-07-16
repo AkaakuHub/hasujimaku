@@ -138,6 +138,7 @@ export default function Page() {
                     height={1080}
                     sx={{
                       width: "100%",
+                      height: "auto",
                       maxWidth: 720,
                       border: 2,
                       borderColor: "common.black",

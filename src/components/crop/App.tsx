@@ -62,7 +62,7 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
           alt="切り抜いた画像"
           width={200}
           height={113}
-          sx={{ width: 200, border: 2, borderColor: "common.black" }}
+          sx={{ width: 200, height: "auto", border: 2, borderColor: "common.black" }}
         />
       )}
       <ImageUploadingButton
