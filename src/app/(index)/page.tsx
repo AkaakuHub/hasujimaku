@@ -134,6 +134,8 @@ export default function Page() {
                     component="img"
                     src={resultImageUrl}
                     alt="生成した画像"
+                    width={1920}
+                    height={1080}
                     sx={{
                       width: "100%",
                       maxWidth: 720,
