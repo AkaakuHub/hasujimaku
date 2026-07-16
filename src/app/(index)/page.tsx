@@ -5,6 +5,8 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  List,
+  ListItem,
   Stack,
   TextField,
   Typography,
@@ -90,8 +92,50 @@ export default function Page() {
         <Stack spacing={4} sx={{ mx: "auto", maxWidth: 1520, alignItems: "center" }}>
           <Card sx={{ ...cardSx, maxWidth: 600 }}>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography variant="body2">活動記録の字幕風の画像を生成します。</Typography>
-              <Typography variant="body2">画像は全てローカルで処理されます。</Typography>
+              <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+                活動記録の字幕風の画像を生成します。
+              </Typography>
+              <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+                画像はすべてローカルで処理されます。
+              </Typography>
+
+              <List
+                component="ul"
+                disablePadding
+                sx={{
+                  mt: 2,
+                  mb: 0,
+                  pl: 3,
+                  textAlign: "left",
+                  listStyleType: "disc",
+                }}
+              >
+                <ListItem
+                  component="li"
+                  disableGutters
+                  sx={{
+                    display: "list-item",
+                    py: 0.25,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+                    公序良俗の範囲で自由にお使いください。
+                  </Typography>
+                </ListItem>
+
+                <ListItem
+                  component="li"
+                  disableGutters
+                  sx={{
+                    display: "list-item",
+                    py: 0.25,
+                  }}
+                >
+                  <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+                    作成された画像に関して、一切の責任を負いません。
+                  </Typography>
+                </ListItem>
+              </List>
             </CardContent>
           </Card>
 
