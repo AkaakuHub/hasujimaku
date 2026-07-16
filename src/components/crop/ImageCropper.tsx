@@ -214,8 +214,12 @@ const ImageCropper: FC<ImageCropperProps> = ({
             }
           }}
         >
-          <ToggleButton value="landscape">横16:9</ToggleButton>
-          <ToggleButton value="portrait">縦9:16</ToggleButton>
+          <ToggleButton value="landscape" sx={{ height: 42 }}>
+            横16:9
+          </ToggleButton>
+          <ToggleButton value="portrait" sx={{ height: 42 }}>
+            縦9:16
+          </ToggleButton>
         </ToggleButtonGroup>
         <Box sx={{ alignItems: "center", display: "flex", gap: 1 }}>
           <IconButton
