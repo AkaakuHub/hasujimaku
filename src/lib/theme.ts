@@ -3,6 +3,7 @@ import { createTheme } from "@mui/material/styles";
 export const theme = createTheme({
   typography: {
     fontFamily: '"Klee One", sans-serif',
+    fontSize: 17,
   },
   components: {
     MuiButton: {
