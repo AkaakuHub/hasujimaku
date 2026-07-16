@@ -1,0 +1,3 @@
+[mcp_servers.chrome_devtools]
+command = "pnpm"
+args = ["exec", "chrome-devtools-mcp", "--headless", "--isolated"]
