@@ -90,7 +90,8 @@ export default function Page() {
         <Stack spacing={4} sx={{ mx: "auto", maxWidth: 1520, alignItems: "center" }}>
           <Card sx={{ ...cardSx, maxWidth: 600 }}>
             <CardContent sx={{ textAlign: "center" }}>
-              <Typography>活動記録の字幕風の画像を生成します。</Typography>
+              <Typography variant="body2">活動記録の字幕風の画像を生成します。</Typography>
+              <Typography variant="body2">画像は全てローカルで処理されます。</Typography>
             </CardContent>
           </Card>
 
