@@ -1,7 +1,7 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 
-import { drawTextWithOutline } from "./textOutline";
+import { drawTextWithOutline, drawTextWithOutlineAndLetterSpacing } from "./textOutline";
 
 interface ImageCanvasProps {
   baseImageBase64: string;
@@ -39,14 +39,15 @@ const drawImage = (
   context.textAlign = "center";
 
   const textX = 960;
+  const quoteLetterSpacing = 2;
 
   context.font = "52px Klee One";
   if (!quote.includes("\n")) {
-    drawTextWithOutline(context, quote, textX, 925);
+    drawTextWithOutlineAndLetterSpacing(context, quote, textX, 925, quoteLetterSpacing);
   } else {
     const [line1, line2] = quote.split("\n");
-    drawTextWithOutline(context, line1, textX, 864);
-    drawTextWithOutline(context, line2, textX, 925);
+    drawTextWithOutlineAndLetterSpacing(context, line1, textX, 864, quoteLetterSpacing);
+    drawTextWithOutlineAndLetterSpacing(context, line2, textX, 925, quoteLetterSpacing);
   }
 
   context.font = "38px Klee One";
