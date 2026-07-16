@@ -42,4 +42,12 @@ describe("getSubtitleLayout", () => {
     expect(layout.quoteYPositions).toEqual([1000 - 216 * scale, 1000 - 155 * scale]);
     expect(layout.nameY).toBeCloseTo(1000 - 66 * scale);
   });
+
+  it("縦9:16でも横幅を基準に文字と位置を縮小する", () => {
+    const layout = getSubtitleLayout(1000, 1778, 2);
+    const scale = 1000 / 1920;
+
+    expect(layout.quoteFontSize).toBeCloseTo(52 * scale);
+    expect(layout.quoteYPositions).toEqual([1778 - 216 * scale, 1778 - 155 * scale]);
+  });
 });

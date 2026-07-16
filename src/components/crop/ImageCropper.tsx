@@ -18,6 +18,7 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
+import { getMinimumZoom, type Size } from "./cropGeometry";
 import { CropImage } from "./cropUtils";
 
 interface ImageCropperProps {
@@ -32,31 +33,7 @@ interface ImageCropperProps {
   onSkipCrop: () => void;
 }
 
-interface Size {
-  height: number;
-  width: number;
-}
-
 type CropOrientation = "landscape" | "portrait";
-
-const getMinimumZoom = (
-  mediaSize: Size | null,
-  cropSize: Size | null,
-  rotation: number,
-): number => {
-  if (!mediaSize || !cropSize) {
-    return 1;
-  }
-
-  const rotationRadians = (rotation * Math.PI) / 180;
-  const cosine = Math.abs(Math.cos(rotationRadians));
-  const sine = Math.abs(Math.sin(rotationRadians));
-
-  return Math.max(
-    (cosine * cropSize.width + sine * cropSize.height) / mediaSize.width,
-    (sine * cropSize.width + cosine * cropSize.height) / mediaSize.height,
-  );
-};
 
 const ImageCropper: FC<ImageCropperProps> = ({
   zoom,

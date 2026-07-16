@@ -1,5 +1,7 @@
 import { Area } from "react-easy-crop";
 
+import { getCropDrawOffset, getRadianAngle } from "./cropGeometry";
+
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -8,23 +10,6 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.setAttribute("crossOrigin", "anonymous");
     image.src = url;
   });
-
-const getRadianAngle = (degreeValue: number): number => (degreeValue * Math.PI) / 180;
-
-const getRotatedSize = (
-  width: number,
-  height: number,
-  rotation: number,
-): { height: number; width: number } => {
-  const rotationRadians = getRadianAngle(rotation);
-
-  return {
-    width:
-      Math.abs(Math.cos(rotationRadians) * width) + Math.abs(Math.sin(rotationRadians) * height),
-    height:
-      Math.abs(Math.sin(rotationRadians) * width) + Math.abs(Math.cos(rotationRadians) * height),
-  };
-};
 
 const getCroppedImage = async (
   imageSource: string,
@@ -39,7 +24,6 @@ const getCroppedImage = async (
     throw new Error("Unable to create 2d context");
   }
 
-  const rotatedImageSize = getRotatedSize(image.width, image.height, rotation);
   const cropX = Math.round(pixelCrop.x);
   const cropY = Math.round(pixelCrop.y);
   const cropWidth = Math.round(pixelCrop.width);
@@ -50,7 +34,12 @@ const getCroppedImage = async (
 
   canvas.width = cropWidth;
   canvas.height = cropHeight;
-  context.translate(rotatedImageSize.width / 2 - cropX, rotatedImageSize.height / 2 - cropY);
+  const drawOffset = getCropDrawOffset(
+    { width: image.width, height: image.height },
+    { x: cropX, y: cropY },
+    rotation,
+  );
+  context.translate(drawOffset.x, drawOffset.y);
   context.rotate(getRadianAngle(rotation));
   context.drawImage(image, -image.width / 2, -image.height / 2);
 
