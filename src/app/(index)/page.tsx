@@ -16,6 +16,7 @@ import CropApp from "../../components/crop/App";
 import Footer from "../../components/footer/footer";
 import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
+import { preloadImageRenderer } from "../../components/imageCanvas/imageRenderer";
 import { getUnsupportedKleeOneCharacters } from "../../lib/kleeOneUnsupportedCharacters";
 import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
@@ -56,6 +57,22 @@ export default function Page() {
 
   useEffect(() => {
     changeThemeColor();
+  }, []);
+
+  useEffect(() => {
+    const preload = () => {
+      preloadImageRenderer();
+      window.removeEventListener("pointerdown", preload);
+      window.removeEventListener("keydown", preload);
+    };
+
+    window.addEventListener("pointerdown", preload, { passive: true });
+    window.addEventListener("keydown", preload);
+
+    return () => {
+      window.removeEventListener("pointerdown", preload);
+      window.removeEventListener("keydown", preload);
+    };
   }, []);
 
   return (

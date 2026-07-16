@@ -7,7 +7,14 @@ interface ImageRenderInput {
 interface ImageRenderRequest {
   input: ImageRenderInput;
   requestId: number;
+  type: "render";
 }
+
+interface ImageRendererInitializeRequest {
+  type: "initialize";
+}
+
+type ImageRenderWorkerRequest = ImageRenderRequest | ImageRendererInitializeRequest;
 
 interface ImageRenderSuccessResponse {
   png: ArrayBuffer;
@@ -30,8 +37,12 @@ interface PendingRender {
 
 export interface ImageRenderWorker {
   addEventListener: (type: "message", listener: (event: MessageEvent<unknown>) => void) => void;
-  postMessage: (message: ImageRenderRequest) => void;
+  postMessage: (message: ImageRenderWorkerRequest) => void;
 }
+
+type ImageRenderer = ((input: ImageRenderInput) => Promise<Blob>) & {
+  preload: () => void;
+};
 
 const isImageRenderResponse = (value: unknown): value is ImageRenderResponse => {
   if (
@@ -46,7 +57,7 @@ const isImageRenderResponse = (value: unknown): value is ImageRenderResponse => 
   return value.type === "success" || value.type === "failure";
 };
 
-export const createImageRenderer = (worker: ImageRenderWorker) => {
+export const createImageRenderer = (worker: ImageRenderWorker): ImageRenderer => {
   let nextRequestId = 0;
   const pendingRenders = new Map<number, PendingRender>();
 
@@ -69,20 +80,26 @@ export const createImageRenderer = (worker: ImageRenderWorker) => {
     pendingRender.resolve(new Blob([event.data.png], { type: "image/png" }));
   });
 
-  return (input: ImageRenderInput): Promise<Blob> => {
+  const renderImage = (input: ImageRenderInput): Promise<Blob> => {
     const requestId = nextRequestId;
     nextRequestId += 1;
 
     return new Promise((resolve, reject) => {
       pendingRenders.set(requestId, { resolve, reject });
-      worker.postMessage({ input, requestId });
+      worker.postMessage({ input, requestId, type: "render" });
     });
   };
+
+  renderImage.preload = () => {
+    worker.postMessage({ type: "initialize" });
+  };
+
+  return renderImage;
 };
 
-let imageRenderer: ReturnType<typeof createImageRenderer> | undefined;
+let imageRenderer: ImageRenderer | undefined;
 
-const getImageRenderer = (): ReturnType<typeof createImageRenderer> => {
+const getImageRenderer = (): ImageRenderer => {
   if (!imageRenderer) {
     const worker = new Worker(new URL("./imageRenderer.worker.ts", import.meta.url), {
       type: "module",
@@ -94,3 +111,7 @@ const getImageRenderer = (): ReturnType<typeof createImageRenderer> => {
 };
 
 export const renderImage = (input: ImageRenderInput): Promise<Blob> => getImageRenderer()(input);
+
+export const preloadImageRenderer = (): void => {
+  getImageRenderer().preload();
+};

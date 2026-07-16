@@ -4,13 +4,18 @@ import { createImageRenderer, type ImageRenderWorker } from "./imageRenderer";
 
 class FakeImageRenderWorker implements ImageRenderWorker {
   private listener: ((event: MessageEvent<unknown>) => void) | undefined;
+  messages: unknown[] = [];
 
   addEventListener(_type: "message", listener: (event: MessageEvent<unknown>) => void): void {
     this.listener = listener;
   }
 
   postMessage(message: unknown): void {
+    this.messages.push(message);
     const request = message as { requestId: number };
+    if (!("requestId" in request)) {
+      return;
+    }
     this.listener?.({
       data: { requestId: request.requestId, type: "success", png: new ArrayBuffer(3) },
     } as MessageEvent<unknown>);
@@ -33,6 +38,14 @@ class FailingImageRenderWorker implements ImageRenderWorker {
 }
 
 describe("createImageRenderer", () => {
+  it("初期化要求をWorkerへ送る", () => {
+    const worker = new FakeImageRenderWorker();
+
+    createImageRenderer(worker).preload();
+
+    expect(worker.messages).toEqual([{ type: "initialize" }]);
+  });
+
   it("WorkerのPNG応答をBlobに変換する", async () => {
     const renderImage = createImageRenderer(new FakeImageRenderWorker());
 

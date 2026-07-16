@@ -14,7 +14,14 @@ interface ImageRenderInput {
 interface ImageRenderRequest {
   input: ImageRenderInput;
   requestId: number;
+  type: "render";
 }
+
+interface ImageRendererInitializeRequest {
+  type: "initialize";
+}
+
+type ImageRenderWorkerRequest = ImageRenderRequest | ImageRendererInitializeRequest;
 
 const canvasWidth = 1920;
 const canvasHeight = 1080;
@@ -71,7 +78,12 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
   }
 };
 
-self.addEventListener("message", (event: MessageEvent<ImageRenderRequest>) => {
+self.addEventListener("message", (event: MessageEvent<ImageRenderWorkerRequest>) => {
+  if (event.data.type === "initialize") {
+    void Promise.all([initializeResvg(), loadKleeOneFontBuffer()]).catch(() => undefined);
+    return;
+  }
+
   void render(event.data.input)
     .then((png) => {
       self.postMessage({ png, requestId: event.data.requestId, type: "success" }, [png]);
