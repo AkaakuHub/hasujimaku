@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 
 import { drawTextWithOutline } from "./textOutline";
@@ -7,111 +7,127 @@ interface ImageCanvasProps {
   baseImageBase64: string;
   quote: string;
   name: string;
-  setResultImageUrl: React.Dispatch<React.SetStateAction<string>>;
-  setIsFetching: React.Dispatch<React.SetStateAction<boolean>>;
+  setResultImageUrl: Dispatch<SetStateAction<string>>;
+  setIsFetching: Dispatch<SetStateAction<boolean>>;
 }
 
-const ImageCanvas: React.FC<ImageCanvasProps> = ({
+const renderingDelay = 150;
+
+const loadImage = (source: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.addEventListener("load", () => resolve(image));
+    image.addEventListener("error", reject);
+    image.src = source;
+  });
+
+const toBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
+  new Promise((resolve) => {
+    canvas.toBlob(resolve);
+  });
+
+const drawImage = (
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  quote: string,
+  name: string,
+) => {
+  context.clearRect(0, 0, 1920, 1080);
+  context.drawImage(image, 0, 0, 1920, 1080);
+  context.fillStyle = "#e6e6e6";
+  context.textAlign = "center";
+
+  const textX = 960;
+  let nameY = 0;
+
+  context.font = "52px Klee One";
+  if (!quote.includes("\n")) {
+    drawTextWithOutline(context, quote, textX, 923.4);
+    nameY = 1006.56;
+  } else {
+    const [line1, line2] = quote.split("\n");
+    drawTextWithOutline(context, line1, textX, 864);
+    drawTextWithOutline(context, line2, textX, 924.48);
+    nameY = 1015.2;
+  }
+
+  context.font = "38px Klee One";
+  drawTextWithOutline(context, `[${name}]`, textX, nameY);
+};
+
+const ImageCanvas = ({
   baseImageBase64,
   quote,
   name,
   setResultImageUrl,
   setIsFetching,
-}) => {
+}: ImageCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isRendering = useRef(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const resultImageUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const generateImage = async () => {
-      if (canvasRef.current === null) {
-        return;
+    return () => {
+      if (resultImageUrlRef.current) {
+        URL.revokeObjectURL(resultImageUrlRef.current);
       }
-
-      const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
-      if (!context) {
-        return;
-      }
-
-      // 前の描画処理をキャンセル
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // 新しいAbortControllerを作成
-      const abortController = new AbortController();
-      abortControllerRef.current = abortController;
-
-      if (baseImageBase64 === "") {
-        return;
-      }
-
-      setIsFetching(true);
-      isRendering.current = true;
-
-      const baseImage = new Image();
-      baseImage.src = baseImageBase64;
-      baseImage.crossOrigin = "anonymous"; // もし必要なら、クロスオリジンを設定
-
-      baseImage.onload = () => {
-        if (abortController.signal.aborted) {
-          // キャンセルされた場合は何もしない
-          return;
-        }
-
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(baseImage, 0, 0, 1920, 1080);
-
-        context.font = "52px Klee One";
-        context.fillStyle = "#e6e6e6";
-        context.textAlign = "center";
-
-        const textX: number = canvas.width / 2;
-        let nameY: number = 0;
-
-        if (!quote.includes("\n")) {
-          // 1行の場合
-          const textY = canvas.height * 0.855;
-          drawTextWithOutline(context, quote, textX, textY);
-          nameY = canvas.height * 0.932;
-        } else {
-          const [line1, line2] = quote.split("\n");
-          const textY1 = canvas.height * 0.8;
-          const textY2 = canvas.height * 0.856;
-          drawTextWithOutline(context, line1, textX, textY1);
-          drawTextWithOutline(context, line2, textX, textY2);
-          nameY = canvas.height * 0.94;
-        }
-
-        context.font = "38px Klee One";
-        drawTextWithOutline(context, `[${name}]`, textX, nameY);
-
-        // Blob変換
-        canvas.toBlob((blob) => {
-          if (blob && !abortController.signal.aborted) {
-            const url = URL.createObjectURL(blob);
-            setResultImageUrl(url);
-            setIsFetching(false);
-            isRendering.current = false;
-          }
-        });
-      };
-
-      baseImage.onerror = () => {
-        if (abortController.signal.aborted) {
-          return;
-        }
-        // エラーハンドリング
-        setIsFetching(false);
-      };
     };
+  }, []);
 
-    // generateImage();
-    document.fonts.ready.then(() => {
-      generateImage();
-    });
-  }, [baseImageBase64, quote, name, setResultImageUrl, setIsFetching]);
+  useEffect(() => {
+    if (baseImageBase64 === "") {
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      const render = async () => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+          return;
+        }
+
+        setIsFetching(true);
+
+        try {
+          await document.fonts.ready;
+          const image = await loadImage(baseImageBase64);
+          if (cancelled) {
+            return;
+          }
+
+          const context = canvas.getContext("2d");
+          if (!context) {
+            return;
+          }
+
+          drawImage(context, image, quote, name);
+          const blob = await toBlob(canvas);
+          if (!blob || cancelled) {
+            return;
+          }
+
+          const resultImageUrl = URL.createObjectURL(blob);
+          if (resultImageUrlRef.current) {
+            URL.revokeObjectURL(resultImageUrlRef.current);
+          }
+          resultImageUrlRef.current = resultImageUrl;
+          setResultImageUrl(resultImageUrl);
+        } finally {
+          if (!cancelled) {
+            setIsFetching(false);
+          }
+        }
+      };
+
+      void render();
+    }, renderingDelay);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [baseImageBase64, name, quote, setIsFetching, setResultImageUrl]);
 
   return (
     <Box component="canvas" ref={canvasRef} width="1920" height="1080" sx={{ display: "none" }} />

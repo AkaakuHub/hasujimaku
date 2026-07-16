@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -38,6 +38,8 @@ export default function Page() {
   const [isFetching, setIsFetching] = useState(false);
   const [themeColors, setThemeColors] = useState<string[]>(["", ""]);
   const [themeName, setThemeName] = useState("");
+  const deferredQuote = useDeferredValue(queryData.quote);
+  const deferredName = useDeferredValue(queryData.name);
 
   const changeThemeColor = () => {
     const theme = themes[Math.floor(Math.random() * themes.length)];
@@ -138,13 +140,12 @@ export default function Page() {
                       maxWidth: 720,
                       border: 2,
                       borderColor: "common.black",
-                      filter: isFetching ? "brightness(0.6)" : "none",
                     }}
                   />
                   <ImageCanvas
                     baseImageBase64={baseImageBase64}
-                    quote={queryData.quote}
-                    name={queryData.name}
+                    quote={deferredQuote}
+                    name={deferredName}
                     setResultImageUrl={setResultImageUrl}
                     setIsFetching={setIsFetching}
                   />
