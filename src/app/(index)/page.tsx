@@ -100,7 +100,7 @@ export default function Page() {
             sx={{ width: "100%", alignItems: "stretch" }}
           >
             <Card sx={{ ...cardSx, flex: 1, minWidth: 0 }}>
-              <CardContent>
+              <CardContent sx={{ paddingBottom: "0!important" }}>
                 <Typography variant="h5" component="h2" gutterBottom sx={{ textAlign: "center" }}>
                   1.画像を選択
                 </Typography>
@@ -156,9 +156,6 @@ export default function Page() {
                       {renderingError}
                     </Typography>
                   )}
-                  <Box sx={{ display: "flex", height: 40, alignItems: "center" }}>
-                    {isFetching && <CircularProgress size={32} />}
-                  </Box>
                 </Stack>
               </CardContent>
             </Card>
@@ -190,23 +187,46 @@ export default function Page() {
                     setIsFetching={setIsFetching}
                   />
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: "100%" }}>
-                    <Button
-                      variant="contained"
-                      color="info"
-                      disabled={!canUseResult}
-                      startIcon={<IosShareIcon />}
-                      sx={{ alignSelf: "stretch", flex: 1 }}
-                      onClick={async () => {
-                        const response = await fetch(resultImageUrl);
-                        const blob = await response.blob();
-                        const file = new File([blob], "hasunosora_jimaku.png", {
-                          type: "image/png",
-                        });
-                        await shareImage(() => navigator.share({ text: shareText, files: [file] }));
-                      }}
-                    >
-                      画像を共有
-                    </Button>
+                    {isFetching ? (
+                      <Button
+                        variant="contained"
+                        color="info"
+                        disabled={!canUseResult}
+                        sx={{ alignSelf: "stretch", flex: 1, height: 48 }}
+                        onClick={async () => {
+                          const response = await fetch(resultImageUrl);
+                          const blob = await response.blob();
+                          const file = new File([blob], "hasunosora_jimaku.png", {
+                            type: "image/png",
+                          });
+                          await shareImage(() =>
+                            navigator.share({ text: shareText, files: [file] }),
+                          );
+                        }}
+                      >
+                        <CircularProgress size={30} />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="info"
+                        disabled={!canUseResult}
+                        startIcon={<IosShareIcon />}
+                        sx={{ alignSelf: "stretch", flex: 1, height: 48 }}
+                        onClick={async () => {
+                          const response = await fetch(resultImageUrl);
+                          const blob = await response.blob();
+                          const file = new File([blob], "hasunosora_jimaku.png", {
+                            type: "image/png",
+                          });
+                          await shareImage(() =>
+                            navigator.share({ text: shareText, files: [file] }),
+                          );
+                        }}
+                      >
+                        画像を共有
+                      </Button>
+                    )}
                   </Stack>
                 </Stack>
               </CardContent>
