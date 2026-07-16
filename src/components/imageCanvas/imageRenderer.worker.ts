@@ -79,17 +79,18 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
 };
 
 self.addEventListener("message", (event: MessageEvent<ImageRenderWorkerRequest>) => {
-  if (event.data.type === "initialize") {
+  const request = event.data;
+  if (request.type === "initialize") {
     void Promise.all([initializeResvg(), loadKleeOneFontBuffer()]).catch(() => undefined);
     return;
   }
 
-  void render(event.data.input)
+  void render(request.input)
     .then((png) => {
-      self.postMessage({ png, requestId: event.data.requestId, type: "success" }, [png]);
+      self.postMessage({ png, requestId: request.requestId, type: "success" }, [png]);
     })
     .catch((error: unknown) => {
       const message = error instanceof Error ? error.message : "画像を生成できませんでした。";
-      self.postMessage({ message, requestId: event.data.requestId, type: "failure" });
+      self.postMessage({ message, requestId: request.requestId, type: "failure" });
     });
 });
