@@ -25,6 +25,8 @@ import styles from "./style.module.scss";
 import CropApp from "../../components/crop/App";
 
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
+import { shareText } from "../../lib/shareText";
+import { themes } from "../../lib/themes";
 
 export default function Page() {
   const [queryData, setQueryData] = useState<queryType>({
@@ -43,45 +45,9 @@ export default function Page() {
   const [themeName, setThemeName] = useState<string>("");
 
   const changeThemeColor = () => {
-    const hasuColors1: string[] = [
-      "#FCE8B2",
-      "#CBD9ED",
-      "#D1EBDC",
-      "#EABDC2",
-      "#F7CFE1",
-      "#EEECED",
-      "#E3F3F4",
-      "#FDF3D0",
-      "#E1DCF6",
-    ];
-    const hasuColors2: string[] = [
-      "#F8B500",
-      "#5383C3",
-      "#68BE8D",
-      "#BA2636	",
-      "#E7609E",
-      "#C8C2C6",
-      "#A2D7DD",
-      "#FAD764",
-      "#9D8DE2",
-    ];
-    const hasuNames: string[] = [
-      "花帆",
-      "さやか",
-      "梢",
-      "綴理",
-      "瑠璃乃",
-      "慈",
-      "吟子",
-      "小鈴",
-      "姫芽",
-    ];
-
-    const randomIndex = Math.floor(Math.random() * hasuColors1.length);
-    const randomColor1: string = hasuColors1[randomIndex];
-    const randomColor2: string = hasuColors2[randomIndex];
-    setThemeColors([randomColor1, randomColor2]);
-    setThemeName(hasuNames[randomIndex]);
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    setThemeColors([...theme.colors]);
+    setThemeName(theme.name);
   };
 
   useEffect(() => {
@@ -228,13 +194,12 @@ export default function Page() {
                   color="info"
                   disabled={isFetching || resultImageUrl === "/card.png"}
                   onClick={async () => {
-                    const text: string = "活動記録 字幕ジェネレーターで作成した画像です。";
                     const response = await fetch(resultImageUrl);
                     const blob = await response.blob();
                     const file = new File([blob], "hasunosora_jimaku.png", { type: "image/png" });
                     navigator
                       .share({
-                        text: decodeURI(text),
+                        text: shareText,
                         files: [file],
                       })
                       .then(() => {
