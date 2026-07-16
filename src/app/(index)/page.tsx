@@ -10,7 +10,6 @@ import {
   Typography,
 } from "@mui/material";
 import IosShareIcon from "@mui/icons-material/IosShare";
-import "@fontsource/klee-one/400.css";
 
 import CropApp from "../../components/crop/App";
 import Footer from "../../components/footer/footer";
@@ -33,7 +32,7 @@ export default function Page() {
     baseImageBase64: "",
   });
   const [baseImageBase64, setBaseImageBase64] = useState("");
-  const [resultImageUrl, setResultImageUrl] = useState("/card.png");
+  const [resultImageUrl, setResultImageUrl] = useState("/card.webp");
   const [isFetching, setIsFetching] = useState(false);
   const [themeColors, setThemeColors] = useState<string[]>(["", ""]);
   const [themeName, setThemeName] = useState("");
@@ -46,7 +45,7 @@ export default function Page() {
     setThemeName(theme.name);
   };
 
-  const canUseResult = !isFetching && resultImageUrl !== "/card.png";
+  const canUseResult = !isFetching && resultImageUrl !== "/card.webp";
 
   useEffect(() => {
     changeThemeColor();
@@ -134,8 +133,8 @@ export default function Page() {
                     component="img"
                     src={resultImageUrl}
                     alt="生成した画像"
-                    width={1920}
-                    height={1080}
+                    width={720}
+                    height={405}
                     sx={{
                       width: "100%",
                       height: "auto",

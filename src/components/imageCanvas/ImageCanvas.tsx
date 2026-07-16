@@ -1,6 +1,7 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 
+import { loadKleeOneFont } from "../../lib/kleeOne";
 import { drawTextWithOutline, drawTextWithOutlineAndLetterSpacing } from "./textOutline";
 
 interface ImageCanvasProps {
@@ -88,7 +89,7 @@ const ImageCanvas = ({
         setIsFetching(true);
 
         try {
-          await document.fonts.ready;
+          await loadKleeOneFont(quote, name);
           const image = await loadImage(baseImageBase64);
           if (cancelled) {
             return;
