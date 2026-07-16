@@ -1,7 +1,9 @@
-import { lazy, Suspense, useState, type FC } from "react";
+import { lazy, Suspense, useRef, useState, type FC } from "react";
 import ImageUploading, { type ImageListType } from "react-images-uploading";
 import { Box, Button, type ButtonProps } from "@mui/material";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
+
+import { normalizeImage } from "./cropUtils";
 
 const ImageCropper = lazy(() => import("./ImageCropper"));
 
@@ -34,9 +36,60 @@ interface Props {
 const App: FC<Props> = ({ setBaseImageBase64 }) => {
   const [image, setImage] = useState<ImageListType>([]);
   const [croppedImage, setCroppedImage] = useState<string>("");
+  const [cropImage, setCropImage] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isNormalizing, setIsNormalizing] = useState(false);
   const [zoom, setZoom] = useState<number>(1);
-  const selectedImage = image[0]?.dataURL ?? "";
+  const [rotation, setRotation] = useState<number>(0);
+  const imageSelectionId = useRef(0);
+
+  const applyImageWithoutCrop = () => {
+    setCroppedImage(cropImage);
+    setBaseImageBase64(cropImage);
+    setDialogOpen(false);
+  };
+
+  const handleImageChange = async (newImage: ImageListType) => {
+    const selectionId = imageSelectionId.current + 1;
+    imageSelectionId.current = selectionId;
+    setImage(newImage);
+    setZoom(1);
+    setRotation(0);
+
+    const selectedImage = newImage[0]?.dataURL ?? "";
+    if (selectedImage === "") {
+      setDialogOpen(false);
+      setIsNormalizing(false);
+      setCropImage("");
+      setCroppedImage("");
+      setBaseImageBase64("");
+      return;
+    }
+
+    setCropImage("");
+    setIsNormalizing(true);
+    setDialogOpen(true);
+
+    try {
+      const normalizedImage = await normalizeImage(selectedImage);
+      if (imageSelectionId.current !== selectionId) {
+        return;
+      }
+
+      setCropImage(normalizedImage);
+      setIsNormalizing(false);
+    } catch {
+      if (imageSelectionId.current !== selectionId) {
+        return;
+      }
+
+      setCropImage("");
+      setCroppedImage("");
+      setBaseImageBase64("");
+      setIsNormalizing(false);
+      setDialogOpen(false);
+    }
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, my: 2 }}>
@@ -45,8 +98,12 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
           <ImageCropper
             zoom={zoom}
             onZoomChange={setZoom}
-            image={selectedImage}
+            isLoading={isNormalizing}
+            rotation={rotation}
+            onRotationChange={setRotation}
+            image={cropImage}
             onCancel={() => setDialogOpen(false)}
+            onSkipCrop={applyImageWithoutCrop}
             onComplete={(croppedImage) => {
               setCroppedImage(croppedImage);
               setBaseImageBase64(croppedImage);
@@ -67,11 +124,7 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
       )}
       <ImageUploadingButton
         value={image}
-        onChange={(newImage) => {
-          setDialogOpen(true);
-          setImage(newImage);
-          setZoom(1);
-        }}
+        onChange={(newImage) => void handleImageChange(newImage)}
       />
     </Box>
   );

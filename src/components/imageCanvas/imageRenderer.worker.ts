@@ -4,6 +4,7 @@ import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import resvgWasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 
 import { loadKleeOneFontBuffer } from "../../lib/kleeOneFont";
+import { getCanvasSize, getSubtitleLayout } from "./renderLayout";
 
 interface ImageRenderInput {
   baseImageBase64: string;
@@ -23,11 +24,6 @@ interface ImageRendererInitializeRequest {
 
 type ImageRenderWorkerRequest = ImageRenderRequest | ImageRendererInitializeRequest;
 
-const canvasWidth = 1920;
-const canvasHeight = 1080;
-const textX = canvasWidth / 2;
-const quoteLetterSpacing = 2;
-
 let resvgPromise: Promise<void> | undefined;
 
 const initializeResvg = (): Promise<void> => {
@@ -44,24 +40,70 @@ const escapeXmlAttribute = (value: string): string =>
 const escapeXmlText = (value: string): string =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
-const createText = (text: string, y: number, fontSize: number, letterSpacing: number): string =>
-  `<text x="${textX}" y="${y}" fill="#e6e6e6" stroke="#121311" stroke-width="6" paint-order="stroke fill" text-anchor="middle" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
+const createText = (
+  text: string,
+  y: number,
+  fontSize: number,
+  letterSpacing: number,
+  textX: number,
+  strokeWidth: number,
+): string =>
+  `<text x="${textX}" y="${y}" fill="#e6e6e6" stroke="#121311" stroke-width="${strokeWidth}" paint-order="stroke fill" text-anchor="middle" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
 
-const createSubtitleSvg = ({ baseImageBase64, name, quote }: ImageRenderInput): string => {
-  const quoteText = quote.includes("\n")
-    ? quote
-        .split("\n")
-        .map((line, index) => createText(line, index === 0 ? 864 : 925, 52, quoteLetterSpacing))
-        .join("")
-    : createText(quote, 925, 52, quoteLetterSpacing);
-  const nameText = createText(`[${name}]`, 1014, 38, 0);
+interface ImageSize {
+  height: number;
+  width: number;
+}
+
+const getImageSize = async (baseImageBase64: string): Promise<ImageSize> => {
+  const response = await fetch(baseImageBase64);
+  const imageBitmap = await createImageBitmap(await response.blob());
+  const imageSize = { width: imageBitmap.width, height: imageBitmap.height };
+  imageBitmap.close();
+
+  return imageSize;
+};
+
+const createSubtitleSvg = async ({
+  baseImageBase64,
+  name,
+  quote,
+}: ImageRenderInput): Promise<string> => {
+  const imageSize = await getImageSize(baseImageBase64);
+  const { width: canvasWidth, height: canvasHeight } = getCanvasSize(imageSize.width, imageSize.height);
+  const quoteLines = quote.split("\n");
+  const subtitleLayout = getSubtitleLayout(canvasWidth, canvasHeight, quoteLines.length);
+  const textX = canvasWidth / 2;
+
+  const quoteText = quoteLines
+    .map((line, index) =>
+      createText(
+        line,
+        subtitleLayout.quoteYPositions[index],
+        subtitleLayout.quoteFontSize,
+        subtitleLayout.quoteLetterSpacing,
+        textX,
+        subtitleLayout.strokeWidth,
+      ),
+    )
+    .join("");
+  const nameText = createText(
+    `[${name}]`,
+    subtitleLayout.nameY,
+    subtitleLayout.nameFontSize,
+    0,
+    textX,
+    subtitleLayout.strokeWidth,
+  );
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}</svg>`;
 };
 
 const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
   const [, fontBuffer] = await Promise.all([initializeResvg(), loadKleeOneFontBuffer()]);
-  const renderer = new Resvg(createSubtitleSvg(input), { font: { fontBuffers: [fontBuffer] } });
+  const renderer = new Resvg(await createSubtitleSvg(input), {
+    font: { fontBuffers: [fontBuffer] },
+  });
 
   try {
     const image = renderer.render();

@@ -21,7 +21,6 @@ import { getUnsupportedKleeOneCharacters } from "../../lib/kleeOneUnsupportedCha
 import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
 import { themes } from "../../lib/themes";
-import { hasAtMostTwoLines } from "../../lib/quote";
 import { queryType } from "../../types";
 
 const cardSx = {
@@ -119,18 +118,13 @@ export default function Page() {
                     label="セリフ"
                     multiline
                     minRows={2}
-                    maxRows={2}
                     placeholder="セリフを入力"
                     error={unsupportedCharacters.length > 0}
                     value={queryData.quote}
                     onCompositionStart={() => setIsComposing(true)}
                     onCompositionEnd={() => setIsComposing(false)}
                     onBlur={() => setIsComposing(false)}
-                    onChange={(event) => {
-                      if (hasAtMostTwoLines(event.target.value)) {
-                        setQueryData({ ...queryData, quote: event.target.value });
-                      }
-                    }}
+                    onChange={(event) => setQueryData({ ...queryData, quote: event.target.value })}
                   />
                   <TextField
                     label="名前"
@@ -152,9 +146,6 @@ export default function Page() {
                       </Box>
                     </Typography>
                   )}
-                  <Typography variant="body2" sx={{ textAlign: "center" }}>
-                    ※セリフは2行まで
-                  </Typography>
                   {baseImageBase64 === "" && (
                     <Typography variant="body2" sx={{ textAlign: "center" }}>
                       まず、画像を選択してください。

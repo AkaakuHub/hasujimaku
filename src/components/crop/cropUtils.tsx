@@ -9,7 +9,13 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
     image.src = url;
   });
 
-const getCroppedImage = async (imageSource: string, pixelCrop: Area): Promise<string> => {
+const getRadianAngle = (degreeValue: number): number => (degreeValue * Math.PI) / 180;
+
+const getCroppedImage = async (
+  imageSource: string,
+  pixelCrop: Area,
+  rotation = 0,
+): Promise<string> => {
   const image = await createImage(imageSource);
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
@@ -18,20 +24,35 @@ const getCroppedImage = async (imageSource: string, pixelCrop: Area): Promise<st
     throw new Error("Unable to create 2d context");
   }
 
-  const maxSize = Math.max(image.width, image.height);
-  const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+  const safeArea = Math.ceil(Math.max(image.width, image.height) * Math.SQRT2);
+  const safeCanvas = document.createElement("canvas");
+  safeCanvas.width = safeArea;
+  safeCanvas.height = safeArea;
+  const safeContext = safeCanvas.getContext("2d");
 
-  canvas.width = safeArea;
-  canvas.height = safeArea;
-  context.drawImage(image, safeArea / 2 - image.width * 0.5, safeArea / 2 - image.height * 0.5);
+  if (!safeContext) {
+    throw new Error("Unable to create 2d context");
+  }
 
-  const imageData = context.getImageData(0, 0, safeArea, safeArea);
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+  safeContext.translate(safeArea / 2, safeArea / 2);
+  safeContext.rotate(getRadianAngle(rotation));
+  safeContext.drawImage(image, -image.width / 2, -image.height / 2);
+
+  const cropX = Math.round(pixelCrop.x);
+  const cropY = Math.round(pixelCrop.y);
+  const cropWidth = Math.round(pixelCrop.width);
+  const cropHeight = Math.round(pixelCrop.height);
+  if (cropWidth <= 0 || cropHeight <= 0) {
+    throw new Error("Invalid crop dimensions");
+  }
+
+  const imageData = safeContext.getImageData(0, 0, safeArea, safeArea);
+  canvas.width = cropWidth;
+  canvas.height = cropHeight;
   context.putImageData(
     imageData,
-    Math.round(-safeArea / 2 + image.width * 0.5 - pixelCrop.x),
-    Math.round(-safeArea / 2 + image.height * 0.5 - pixelCrop.y),
+    Math.round(-safeArea / 2 + image.width / 2 - cropX),
+    Math.round(-safeArea / 2 + image.height / 2 - cropY),
   );
 
   return canvas.toDataURL("image/jpeg");
@@ -66,13 +87,21 @@ const convertHeicImage = async (image: string): Promise<string> => {
   });
 };
 
+export const normalizeImage = async (image: string): Promise<string> => {
+  if (await isHeicImage(image)) {
+    return convertHeicImage(image);
+  }
+
+  return image;
+};
+
 export const CropImage = async (
   image: string,
   croppedAreaPixels: Area,
+  rotation: number,
 ): Promise<string | undefined> => {
   try {
-    const sourceImage = (await isHeicImage(image)) ? await convertHeicImage(image) : image;
-    return getCroppedImage(sourceImage, croppedAreaPixels);
+    return getCroppedImage(image, croppedAreaPixels, rotation);
   } catch (error) {
     console.error(error);
   }
