@@ -1,67 +1,28 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
-import Box from "@mui/material/Box";
 
-import { drawTextWithOutline, drawTextWithOutlineAndLetterSpacing } from "./textOutline";
+import { renderImage } from "./imageRenderer";
 
 interface ImageCanvasProps {
   baseImageBase64: string;
+  canRender: boolean;
   quote: string;
   name: string;
+  setRenderingError: Dispatch<SetStateAction<string | null>>;
   setResultImageUrl: Dispatch<SetStateAction<string>>;
   setIsFetching: Dispatch<SetStateAction<boolean>>;
 }
 
 const renderingDelay = 150;
 
-const loadImage = (source: string): Promise<HTMLImageElement> =>
-  new Promise((resolve, reject) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.addEventListener("load", () => resolve(image));
-    image.addEventListener("error", reject);
-    image.src = source;
-  });
-
-const toBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
-  new Promise((resolve) => {
-    canvas.toBlob(resolve);
-  });
-
-const drawImage = (
-  context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  quote: string,
-  name: string,
-) => {
-  context.clearRect(0, 0, 1920, 1080);
-  context.drawImage(image, 0, 0, 1920, 1080);
-  context.fillStyle = "#e6e6e6";
-  context.textAlign = "center";
-
-  const textX = 960;
-  const quoteLetterSpacing = 2;
-
-  context.font = "52px Klee One";
-  if (!quote.includes("\n")) {
-    drawTextWithOutlineAndLetterSpacing(context, quote, textX, 925, quoteLetterSpacing);
-  } else {
-    const [line1, line2] = quote.split("\n");
-    drawTextWithOutlineAndLetterSpacing(context, line1, textX, 864, quoteLetterSpacing);
-    drawTextWithOutlineAndLetterSpacing(context, line2, textX, 925, quoteLetterSpacing);
-  }
-
-  context.font = "38px Klee One";
-  drawTextWithOutline(context, `[${name}]`, textX, 1014);
-};
-
 const ImageCanvas = ({
   baseImageBase64,
+  canRender,
   quote,
   name,
+  setRenderingError,
   setResultImageUrl,
   setIsFetching,
 }: ImageCanvasProps) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const resultImageUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -73,35 +34,21 @@ const ImageCanvas = ({
   }, []);
 
   useEffect(() => {
-    if (baseImageBase64 === "") {
+    if (baseImageBase64 === "" || !canRender) {
+      setIsFetching(false);
+      setRenderingError(null);
       return;
     }
 
     let cancelled = false;
     const timeoutId = window.setTimeout(() => {
       const render = async () => {
-        const canvas = canvasRef.current;
-        if (!canvas) {
-          return;
-        }
-
         setIsFetching(true);
+        setRenderingError(null);
 
         try {
-          await document.fonts.ready;
-          const image = await loadImage(baseImageBase64);
+          const blob = await renderImage({ baseImageBase64, quote, name });
           if (cancelled) {
-            return;
-          }
-
-          const context = canvas.getContext("2d");
-          if (!context) {
-            return;
-          }
-
-          drawImage(context, image, quote, name);
-          const blob = await toBlob(canvas);
-          if (!blob || cancelled) {
             return;
           }
 
@@ -111,6 +58,12 @@ const ImageCanvas = ({
           }
           resultImageUrlRef.current = resultImageUrl;
           setResultImageUrl(resultImageUrl);
+        } catch (error) {
+          if (!cancelled) {
+            setRenderingError(
+              error instanceof Error ? error.message : "画像を生成できませんでした。",
+            );
+          }
         } finally {
           if (!cancelled) {
             setIsFetching(false);
@@ -125,11 +78,17 @@ const ImageCanvas = ({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [baseImageBase64, name, quote, setIsFetching, setResultImageUrl]);
+  }, [
+    baseImageBase64,
+    canRender,
+    name,
+    quote,
+    setIsFetching,
+    setRenderingError,
+    setResultImageUrl,
+  ]);
 
-  return (
-    <Box component="canvas" ref={canvasRef} width="1920" height="1080" sx={{ display: "none" }} />
-  );
+  return null;
 };
 
 export default ImageCanvas;

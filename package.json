@@ -19,6 +19,7 @@
     "@fontsource/klee-one": "^5.2.8",
     "@mui/icons-material": "^9.2.0",
     "@mui/material": "^9.2.0",
+    "@resvg/resvg-wasm": "2.6.2",
     "heic2any": "^0.0.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

@@ -16,6 +16,7 @@ import CropApp from "../../components/crop/App";
 import Footer from "../../components/footer/footer";
 import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
+import { getUnsupportedKleeOneCharacters } from "../../lib/kleeOneUnsupportedCharacters";
 import { shareText } from "../../lib/shareText";
 import { themes } from "../../lib/themes";
 import { hasAtMostTwoLines } from "../../lib/quote";
@@ -35,10 +36,12 @@ export default function Page() {
   const [baseImageBase64, setBaseImageBase64] = useState("");
   const [resultImageUrl, setResultImageUrl] = useState("/card.webp");
   const [isFetching, setIsFetching] = useState(false);
+  const [renderingError, setRenderingError] = useState<string | null>(null);
   const [themeColors, setThemeColors] = useState<string[]>(["", ""]);
   const [themeName, setThemeName] = useState("");
   const deferredQuote = useDeferredValue(queryData.quote);
   const deferredName = useDeferredValue(queryData.name);
+  const unsupportedCharacters = getUnsupportedKleeOneCharacters(queryData.quote, queryData.name);
 
   const changeThemeColor = () => {
     const theme = themes[Math.floor(Math.random() * themes.length)];
@@ -46,7 +49,9 @@ export default function Page() {
     setThemeName(theme.name);
   };
 
-  const canUseResult = !isFetching && resultImageUrl !== "/card.webp";
+  const canRender = unsupportedCharacters.length === 0;
+  const canUseResult =
+    canRender && renderingError === null && !isFetching && resultImageUrl !== "/card.webp";
 
   useEffect(() => {
     changeThemeColor();
@@ -97,6 +102,7 @@ export default function Page() {
                     minRows={2}
                     maxRows={2}
                     placeholder="セリフを入力"
+                    error={unsupportedCharacters.length > 0}
                     value={queryData.quote}
                     onChange={(event) => {
                       if (hasAtMostTwoLines(event.target.value)) {
@@ -107,17 +113,31 @@ export default function Page() {
                   <TextField
                     label="名前"
                     placeholder="名前を入力"
+                    error={unsupportedCharacters.length > 0}
                     value={queryData.name}
                     onChange={(event) => {
                       setQueryData({ ...queryData, name: event.target.value });
                     }}
                   />
+                  {unsupportedCharacters.length > 0 && (
+                    <Typography color="error" variant="body2">
+                      Klee Oneに対応していない文字があります:
+                      <Box component="span" sx={{ fontFamily: "system-ui" }}>
+                        「{unsupportedCharacters.join("、")}」
+                      </Box>
+                    </Typography>
+                  )}
                   <Typography variant="body2" sx={{ textAlign: "center" }}>
                     ※セリフは2行まで
                   </Typography>
                   {baseImageBase64 === "" && (
                     <Typography variant="body2" sx={{ textAlign: "center" }}>
                       まず、画像を選択してください。
+                    </Typography>
+                  )}
+                  {renderingError !== null && (
+                    <Typography color="error" variant="body2">
+                      {renderingError}
                     </Typography>
                   )}
                   <Box sx={{ display: "flex", height: 40, alignItems: "center" }}>
@@ -146,8 +166,10 @@ export default function Page() {
                   />
                   <ImageCanvas
                     baseImageBase64={baseImageBase64}
+                    canRender={canRender}
                     quote={deferredQuote}
                     name={deferredName}
+                    setRenderingError={setRenderingError}
                     setResultImageUrl={setResultImageUrl}
                     setIsFetching={setIsFetching}
                   />
