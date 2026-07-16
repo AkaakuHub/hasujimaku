@@ -186,11 +186,9 @@ export default function Page() {
             </Card>
           </Stack>
 
-          <Card sx={{ ...cardSx, maxWidth: 600 }}>
-            <CardContent sx={{ textAlign: "center" }}>
-              <Typography>使用フォント:Klee One</Typography>
-            </CardContent>
-          </Card>
+          <Typography variant="body2" sx={{ color: "common.black" }}>
+            使用フォント:Klee One
+          </Typography>
         </Stack>
       </Box>
       <Footer themeName={themeName} />
