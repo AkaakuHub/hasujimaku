@@ -1,6 +1,7 @@
 import { Area } from "react-easy-crop";
 
 import { getCropDrawOffset, getRadianAngle } from "./cropGeometry";
+import { getResizedImageDimensions } from "./imageDimensions";
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
@@ -75,12 +76,29 @@ const convertHeicImage = async (image: string): Promise<string> => {
   });
 };
 
-export const normalizeImage = async (image: string): Promise<string> => {
-  if (await isHeicImage(image)) {
-    return convertHeicImage(image);
+const resizeImage = async (imageSource: string): Promise<string> => {
+  const image = await createImage(imageSource);
+  const resizedDimensions = getResizedImageDimensions({ width: image.width, height: image.height });
+  if (resizedDimensions.width === image.width && resizedDimensions.height === image.height) {
+    return imageSource;
   }
 
-  return image;
+  const canvas = document.createElement("canvas");
+  canvas.width = resizedDimensions.width;
+  canvas.height = resizedDimensions.height;
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Unable to create 2d context");
+  }
+
+  context.drawImage(image, 0, 0, resizedDimensions.width, resizedDimensions.height);
+  return canvas.toDataURL("image/jpeg", 0.92);
+};
+
+export const normalizeImage = async (image: string): Promise<string> => {
+  const sourceImage = (await isHeicImage(image)) ? await convertHeicImage(image) : image;
+
+  return resizeImage(sourceImage);
 };
 
 export const CropImage = async (

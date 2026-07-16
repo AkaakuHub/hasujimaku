@@ -7,7 +7,7 @@ const BASE_QUOTE_LETTER_SPACING = 2;
 const BASE_STROKE_WIDTH = 6;
 const BASE_QUOTE_BOTTOM_OFFSET = 155;
 const BASE_QUOTE_LINE_HEIGHT = 61;
-const BASE_NAME_BOTTOM_OFFSET = 66;
+const BASE_NAME_FROM_QUOTE_GAP = 89;
 
 interface ImageCanvasSize {
   height: number;
@@ -36,29 +36,42 @@ export const getCanvasSize = (imageWidth: number, imageHeight: number): ImageCan
   };
 };
 
+const getTextScale = (canvasWidth: number, canvasHeight: number): number => {
+  if (canvasHeight > canvasWidth) {
+    return canvasWidth / BASE_CANVAS_HEIGHT;
+  }
+
+  return Math.min(canvasWidth / BASE_CANVAS_WIDTH, canvasHeight / BASE_CANVAS_HEIGHT);
+};
+
+const getQuoteYPositions = (
+  canvasHeight: number,
+  quoteLineCount: number,
+  textScale: number,
+): number[] => {
+  const lastQuoteY = canvasHeight - BASE_QUOTE_BOTTOM_OFFSET * textScale;
+
+  return Array.from(
+    { length: quoteLineCount },
+    (_, index) => lastQuoteY - (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT * textScale,
+  );
+};
+
 export const getSubtitleLayout = (
   canvasWidth: number,
   canvasHeight: number,
   quoteLineCount: number,
 ): SubtitleLayout => {
-  const landscapeScale = Math.min(
-    canvasWidth / BASE_CANVAS_WIDTH,
-    canvasHeight / BASE_CANVAS_HEIGHT,
-  );
-  const isPortrait = canvasHeight > canvasWidth;
-  const fontScale = isPortrait ? canvasWidth / BASE_CANVAS_HEIGHT : landscapeScale;
-  const lastQuoteY = canvasHeight - BASE_QUOTE_BOTTOM_OFFSET * fontScale;
-  const quoteYPositions = Array.from(
-    { length: quoteLineCount },
-    (_, index) => lastQuoteY - (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT * fontScale,
-  );
+  const textScale = getTextScale(canvasWidth, canvasHeight);
+  const quoteYPositions = getQuoteYPositions(canvasHeight, quoteLineCount, textScale);
+  const lastQuoteY = quoteYPositions[quoteYPositions.length - 1] ?? canvasHeight;
 
   return {
-    nameFontSize: BASE_NAME_FONT_SIZE * fontScale,
-    nameY: lastQuoteY + (BASE_QUOTE_BOTTOM_OFFSET - BASE_NAME_BOTTOM_OFFSET) * fontScale,
-    quoteFontSize: BASE_QUOTE_FONT_SIZE * fontScale,
-    quoteLetterSpacing: BASE_QUOTE_LETTER_SPACING * fontScale,
+    nameFontSize: BASE_NAME_FONT_SIZE * textScale,
+    nameY: lastQuoteY + BASE_NAME_FROM_QUOTE_GAP * textScale,
+    quoteFontSize: BASE_QUOTE_FONT_SIZE * textScale,
+    quoteLetterSpacing: BASE_QUOTE_LETTER_SPACING * textScale,
     quoteYPositions,
-    strokeWidth: BASE_STROKE_WIDTH * fontScale,
+    strokeWidth: BASE_STROKE_WIDTH * textScale,
   };
 };

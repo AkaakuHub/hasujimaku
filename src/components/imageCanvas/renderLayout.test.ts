@@ -43,7 +43,7 @@ describe("getSubtitleLayout", () => {
     expect(layout.nameY).toBeCloseTo(1000 - 66 * scale);
   });
 
-  it("縦9:16では文字を短辺、下端位置を高さに合わせて計算する", () => {
+  it("縦9:16では文字と下端レイアウトを短辺に合わせて計算する", () => {
     const layout = getSubtitleLayout(1000, 1778, 2);
     const fontScale = 1000 / 1080;
 
