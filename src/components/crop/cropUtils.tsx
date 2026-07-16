@@ -11,6 +11,21 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
 
 const getRadianAngle = (degreeValue: number): number => (degreeValue * Math.PI) / 180;
 
+const getRotatedSize = (
+  width: number,
+  height: number,
+  rotation: number,
+): { height: number; width: number } => {
+  const rotationRadians = getRadianAngle(rotation);
+
+  return {
+    width:
+      Math.abs(Math.cos(rotationRadians) * width) + Math.abs(Math.sin(rotationRadians) * height),
+    height:
+      Math.abs(Math.sin(rotationRadians) * width) + Math.abs(Math.cos(rotationRadians) * height),
+  };
+};
+
 const getCroppedImage = async (
   imageSource: string,
   pixelCrop: Area,
@@ -38,6 +53,7 @@ const getCroppedImage = async (
   safeContext.rotate(getRadianAngle(rotation));
   safeContext.drawImage(image, -image.width / 2, -image.height / 2);
 
+  const rotatedImageSize = getRotatedSize(image.width, image.height, rotation);
   const cropX = Math.round(pixelCrop.x);
   const cropY = Math.round(pixelCrop.y);
   const cropWidth = Math.round(pixelCrop.width);
@@ -51,8 +67,8 @@ const getCroppedImage = async (
   canvas.height = cropHeight;
   context.putImageData(
     imageData,
-    Math.round(-safeArea / 2 + image.width / 2 - cropX),
-    Math.round(-safeArea / 2 + image.height / 2 - cropY),
+    Math.round(-safeArea / 2 + rotatedImageSize.width / 2 - cropX),
+    Math.round(-safeArea / 2 + rotatedImageSize.height / 2 - cropY),
   );
 
   return canvas.toDataURL("image/jpeg");
