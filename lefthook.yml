@@ -5,5 +5,7 @@ pre-commit:
       run: pnpm format
     lint:
       run: pnpm lint
+    knip:
+      run: pnpm knip
     test:
       run: pnpm test
