@@ -279,6 +279,13 @@ export default function Page() {
                 </Stack>
               </CardContent>
             </Card>
+            <Card sx={{ ...cardSx, maxWidth: 600 }}>
+              <CardContent sx={{ textAlign: "center" }}>
+                <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+                  公式画像との見分けが付かなくなるという問題点を頂いたため、現在透かしが入ります。ご了承ください。
+                </Typography>
+              </CardContent>
+            </Card>
           </Stack>
 
           <Typography variant="body2" sx={{ color: "common.black" }}>
