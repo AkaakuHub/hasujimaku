@@ -39,20 +39,6 @@ const getCroppedImage = async (
     throw new Error("Unable to create 2d context");
   }
 
-  const safeArea = Math.ceil(Math.max(image.width, image.height) * Math.SQRT2);
-  const safeCanvas = document.createElement("canvas");
-  safeCanvas.width = safeArea;
-  safeCanvas.height = safeArea;
-  const safeContext = safeCanvas.getContext("2d");
-
-  if (!safeContext) {
-    throw new Error("Unable to create 2d context");
-  }
-
-  safeContext.translate(safeArea / 2, safeArea / 2);
-  safeContext.rotate(getRadianAngle(rotation));
-  safeContext.drawImage(image, -image.width / 2, -image.height / 2);
-
   const rotatedImageSize = getRotatedSize(image.width, image.height, rotation);
   const cropX = Math.round(pixelCrop.x);
   const cropY = Math.round(pixelCrop.y);
@@ -62,14 +48,11 @@ const getCroppedImage = async (
     throw new Error("Invalid crop dimensions");
   }
 
-  const imageData = safeContext.getImageData(0, 0, safeArea, safeArea);
   canvas.width = cropWidth;
   canvas.height = cropHeight;
-  context.putImageData(
-    imageData,
-    Math.round(-safeArea / 2 + rotatedImageSize.width / 2 - cropX),
-    Math.round(-safeArea / 2 + rotatedImageSize.height / 2 - cropY),
-  );
+  context.translate(rotatedImageSize.width / 2 - cropX, rotatedImageSize.height / 2 - cropY);
+  context.rotate(getRadianAngle(rotation));
+  context.drawImage(image, -image.width / 2, -image.height / 2);
 
   return canvas.toDataURL("image/jpeg");
 };
