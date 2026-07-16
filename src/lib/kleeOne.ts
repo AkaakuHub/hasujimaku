@@ -1,4 +1,4 @@
-const fontDescription = "400 52px Klee One";
+const fontDescription = '400 52px "Klee One"';
 
 const buildKleeOneText = (quote: string, name: string): string => `${quote}[${name}]`;
 
