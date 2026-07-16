@@ -1,19 +1,20 @@
 import { useState, type FC } from "react";
 import ImageUploading, { type ImageListType } from "react-images-uploading";
-import Cropper, { Area } from "react-easy-crop";
+import Cropper, { type Area } from "react-easy-crop";
 import {
+  Box,
   Button,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  Slider,
   type ButtonProps,
 } from "@mui/material";
-import { CropImage } from "./cropUtils";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
-import { Slider } from "@mui/material";
-
-import styles from "./style.module.scss";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { CropImage } from "./cropUtils";
 
 interface ImageUploadingButtonProps extends Omit<ButtonProps, "onChange" | "value"> {
   value: ImageListType;
@@ -24,8 +25,12 @@ const ImageUploadingButton: FC<ImageUploadingButtonProps> = ({ value, onChange, 
   return (
     <ImageUploading value={value} onChange={onChange}>
       {({ onImageUpload, onImageUpdate }) => (
-        <Button color="primary" onClick={value ? onImageUpload : () => onImageUpdate(0)} {...props}>
-          <FileUploadIcon />
+        <Button
+          color="primary"
+          onClick={value.length === 0 ? onImageUpload : () => onImageUpdate(0)}
+          startIcon={<FileUploadIcon />}
+          {...props}
+        >
           画像を選択
         </Button>
       )}
@@ -35,31 +40,71 @@ const ImageUploadingButton: FC<ImageUploadingButtonProps> = ({ value, onChange, 
 
 interface ImageCropperProps {
   zoom: number;
-  setZoom: (zoom: number) => void;
+  onZoomChange: (zoom: number) => void;
   open: boolean;
   image: string;
+  onCancel: () => void;
   onComplete: (image: string) => void;
-  containerStyle: React.CSSProperties;
 }
 
 const ImageCropper: FC<ImageCropperProps> = ({
   zoom,
-  setZoom,
+  onZoomChange,
   open,
   image,
+  onCancel,
   onComplete,
-  containerStyle,
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const maxZoom = 10;
 
-  const maxZoom: number = 10;
+  const handleComplete = async () => {
+    if (!croppedAreaPixels) {
+      return;
+    }
+
+    const croppedImage = await CropImage(image, croppedAreaPixels);
+    if (croppedImage) {
+      onComplete(croppedImage);
+    }
+  };
 
   return (
-    <Dialog open={open} maxWidth="sm" fullWidth>
-      <DialogTitle>画像をクロップ</DialogTitle>
-      <DialogContent>
-        <div style={containerStyle}>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      fullScreen={isMobile}
+      fullWidth
+      maxWidth="sm"
+      scroll="paper"
+      slotProps={{
+        paper: {
+          sx: {
+            display: "flex",
+            flexDirection: "column",
+            height: { xs: "100dvh", sm: "min(720px, calc(100dvh - 64px))" },
+            m: { xs: 0, sm: 4 },
+          },
+        },
+      }}
+    >
+      <DialogTitle sx={{ flexShrink: 0 }}>画像をクロップ</DialogTitle>
+      <DialogContent
+        sx={{
+          display: "flex",
+          flex: 1,
+          flexDirection: "column",
+          gap: 2,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
+        <Box
+          sx={{ position: "relative", flex: 1, minHeight: 0, width: "100%", bgcolor: "grey.900" }}
+        >
           <Cropper
             image={image}
             crop={crop}
@@ -70,36 +115,25 @@ const ImageCropper: FC<ImageCropperProps> = ({
             onCropComplete={(_, croppedAreaPixels) => {
               setCroppedAreaPixels(croppedAreaPixels);
             }}
-            onZoomChange={setZoom}
+            onZoomChange={onZoomChange}
           />
-        </div>
+        </Box>
         <Slider
           value={zoom}
           min={1}
           max={maxZoom}
           step={0.05}
-          onChange={(event, newValue) => {
-            setZoom(newValue as number);
-            // console.log(newValue);
+          onChange={(_, newValue) => {
+            if (typeof newValue === "number") {
+              onZoomChange(newValue);
+            }
           }}
         />
       </DialogContent>
 
       <DialogActions>
-        <Button
-          color="primary"
-          onClick={() => {
-            if (!croppedAreaPixels) {
-              return;
-            }
-
-            CropImage(image, croppedAreaPixels).then((croppedImage) => {
-              if (croppedImage) {
-                onComplete(croppedImage);
-              }
-            });
-          }}
-        >
+        <Button onClick={onCancel}>キャンセル</Button>
+        <Button variant="contained" onClick={handleComplete}>
           決定
         </Button>
       </DialogActions>
@@ -116,28 +150,29 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
   const [croppedImage, setCroppedImage] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [zoom, setZoom] = useState<number>(1);
+  const selectedImage = image[0]?.dataURL ?? "";
 
   return (
-    <div className={styles["root"]}>
+    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, my: 2 }}>
       <ImageCropper
         zoom={zoom}
-        setZoom={setZoom}
+        onZoomChange={setZoom}
         open={dialogOpen}
-        image={image.length > 0 ? (image[0].dataURL as string) : ""}
+        image={selectedImage}
+        onCancel={() => setDialogOpen(false)}
         onComplete={(croppedImage) => {
           setCroppedImage(croppedImage);
           setBaseImageBase64(croppedImage);
           setDialogOpen(false);
         }}
-        containerStyle={{
-          position: "relative",
-          width: "100%",
-          height: 500,
-          background: "#333",
-        }}
       />
       {croppedImage !== "" && (
-        <img src={croppedImage} alt="Cropped image" className={styles["cropped-image"]} />
+        <Box
+          component="img"
+          src={croppedImage}
+          alt="切り抜いた画像"
+          sx={{ width: 200, border: 2, borderColor: "common.black" }}
+        />
       )}
       <ImageUploadingButton
         value={image}
@@ -147,7 +182,7 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
           setZoom(1);
         }}
       />
-    </div>
+    </Box>
   );
 };
 

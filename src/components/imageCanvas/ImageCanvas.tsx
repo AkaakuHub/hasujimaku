@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import Box from "@mui/material/Box";
 
 import { drawTextWithOutline } from "./textOutline";
 
@@ -113,9 +114,7 @@ const ImageCanvas: React.FC<ImageCanvasProps> = ({
   }, [baseImageBase64, quote, name, setResultImageUrl, setIsFetching]);
 
   return (
-    <div>
-      <canvas ref={canvasRef} width="1920" height="1080" style={{ display: "none" }}></canvas>
-    </div>
+    <Box component="canvas" ref={canvasRef} width="1920" height="1080" sx={{ display: "none" }} />
   );
 };
 
