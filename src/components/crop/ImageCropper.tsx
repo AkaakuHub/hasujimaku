@@ -257,16 +257,24 @@ const ImageCropper: FC<ImageCropperProps> = ({
       {isLoading && (
         <Box
           sx={{
-            alignItems: "center",
             backgroundColor: "rgba(0, 0, 0, 0.4)",
-            display: "flex",
             inset: 0,
-            justifyContent: "center",
             position: "absolute",
             zIndex: 1,
           }}
+        />
+      )}
+      {isLoading && (
+        <Box
+          sx={{
+            left: "50%",
+            position: "absolute",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 10,
+          }}
         >
-          <CircularProgress color="inherit" />
+          <CircularProgress color="primary" />
         </Box>
       )}
     </Dialog>
