@@ -39,21 +39,18 @@ const drawImage = (
   context.textAlign = "center";
 
   const textX = 960;
-  let nameY = 0;
 
   context.font = "52px Klee One";
   if (!quote.includes("\n")) {
-    drawTextWithOutline(context, quote, textX, 923.4);
-    nameY = 1006.56;
+    drawTextWithOutline(context, quote, textX, 925);
   } else {
     const [line1, line2] = quote.split("\n");
     drawTextWithOutline(context, line1, textX, 864);
-    drawTextWithOutline(context, line2, textX, 924.48);
-    nameY = 1015.2;
+    drawTextWithOutline(context, line2, textX, 925);
   }
 
   context.font = "38px Klee One";
-  drawTextWithOutline(context, `[${name}]`, textX, nameY);
+  drawTextWithOutline(context, `[${name}]`, textX, 1014);
 };
 
 const ImageCanvas = ({
