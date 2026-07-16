@@ -150,21 +150,6 @@ export default function Page() {
                     setIsFetching={setIsFetching}
                   />
                   <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ width: "100%" }}>
-                    <Box
-                      component="a"
-                      href={canUseResult ? resultImageUrl : undefined}
-                      download="hasunosora_jimaku.png"
-                      sx={{ textDecoration: "none" }}
-                    >
-                      <Button
-                        variant="contained"
-                        color="success"
-                        disabled={!canUseResult}
-                        startIcon={<DownloadIcon />}
-                      >
-                        画像をダウンロード
-                      </Button>
-                    </Box>
                     <Button
                       variant="contained"
                       color="info"
