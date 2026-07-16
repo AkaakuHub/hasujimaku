@@ -138,6 +138,9 @@ export default function Page() {
                       setQueryData({ ...queryData, name: event.target.value });
                     }}
                   />
+                  <Typography variant="body2" sx={{ textAlign: "center" }}>
+                    行を増やす場合は改行してください。
+                  </Typography>
                   {unsupportedCharacters.length > 0 && (
                     <Typography color="error" variant="body2">
                       Klee Oneに対応していない文字があります:
