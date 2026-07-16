@@ -41,6 +41,7 @@ export default function Page() {
   const [renderingError, setRenderingError] = useState<string | null>(null);
   const [themeColors, setThemeColors] = useState<string[]>(["", ""]);
   const [themeName, setThemeName] = useState("");
+  const [isComposing, setIsComposing] = useState(false);
   const deferredQuote = useDeferredValue(queryData.quote);
   const deferredName = useDeferredValue(queryData.name);
   const unsupportedCharacters = getUnsupportedKleeOneCharacters(queryData.quote, queryData.name);
@@ -51,7 +52,7 @@ export default function Page() {
     setThemeName(theme.name);
   };
 
-  const canRender = unsupportedCharacters.length === 0;
+  const canRender = !isComposing && unsupportedCharacters.length === 0;
   const canUseResult =
     canRender && renderingError === null && !isFetching && resultImageUrl !== "/card.webp";
 
@@ -122,6 +123,9 @@ export default function Page() {
                     placeholder="セリフを入力"
                     error={unsupportedCharacters.length > 0}
                     value={queryData.quote}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onBlur={() => setIsComposing(false)}
                     onChange={(event) => {
                       if (hasAtMostTwoLines(event.target.value)) {
                         setQueryData({ ...queryData, quote: event.target.value });
@@ -133,6 +137,9 @@ export default function Page() {
                     placeholder="名前を入力"
                     error={unsupportedCharacters.length > 0}
                     value={queryData.name}
+                    onCompositionStart={() => setIsComposing(true)}
+                    onCompositionEnd={() => setIsComposing(false)}
+                    onBlur={() => setIsComposing(false)}
                     onChange={(event) => {
                       setQueryData({ ...queryData, name: event.target.value });
                     }}
