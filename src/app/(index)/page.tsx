@@ -155,6 +155,7 @@ export default function Page() {
                       color="info"
                       disabled={!canUseResult}
                       startIcon={<IosShareIcon />}
+                      sx={{ alignSelf: "stretch", flex: 1 }}
                       onClick={async () => {
                         const response = await fetch(resultImageUrl);
                         const blob = await response.blob();
