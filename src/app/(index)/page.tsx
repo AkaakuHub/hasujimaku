@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import IosShareIcon from "@mui/icons-material/IosShare";
+import "@fontsource/klee-one/400.css";
 
 import CropApp from "../../components/crop/App";
 import Footer from "../../components/footer/footer";
