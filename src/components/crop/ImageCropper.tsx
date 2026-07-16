@@ -195,8 +195,8 @@ const ImageCropper: FC<ImageCropperProps> = ({
               onCropComplete={(_, croppedAreaPixels) => {
                 setCroppedAreaPixels(croppedAreaPixels);
               }}
-              onMediaLoaded={(loadedMediaSize) => {
-                setMediaSize({ width: loadedMediaSize.width, height: loadedMediaSize.height });
+              setMediaSize={(nextMediaSize) => {
+                setMediaSize({ width: nextMediaSize.width, height: nextMediaSize.height });
               }}
               onZoomChange={onZoomChange}
               onRotationChange={onRotationChange}
