@@ -2,6 +2,21 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8" />
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+
+      gtag("js", new Date());
+      gtag("config", "%VITE_GA_ID%");
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="蓮ノ空の活動記録の字幕風の画像を作成することができるサイトです。" />
     <link rel="canonical" href="%VITE_SITE_URL%/" />

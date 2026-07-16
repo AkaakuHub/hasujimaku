@@ -4,10 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 
 import Page from "./app/(index)/page";
-import { initializeGoogleAnalytics } from "./lib/analytics";
 import { theme } from "./lib/theme";
-
-initializeGoogleAnalytics();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
