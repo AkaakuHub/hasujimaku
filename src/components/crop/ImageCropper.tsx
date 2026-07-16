@@ -10,6 +10,8 @@ import {
   DialogTitle,
   IconButton,
   Slider,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import RotateRightIcon from "@mui/icons-material/RotateRight";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
@@ -34,6 +36,8 @@ interface Size {
   height: number;
   width: number;
 }
+
+type CropOrientation = "landscape" | "portrait";
 
 const getMinimumZoom = (
   mediaSize: Size | null,
@@ -69,8 +73,10 @@ const ImageCropper: FC<ImageCropperProps> = ({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [cropSize, setCropSize] = useState<Size | null>(null);
   const [mediaSize, setMediaSize] = useState<Size | null>(null);
+  const [orientation, setOrientation] = useState<CropOrientation>("landscape");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const aspect = orientation === "landscape" ? 16 / 9 : 9 / 16;
   const minimumZoom = getMinimumZoom(mediaSize, cropSize, rotation);
   const maximumZoom = Math.max(10, minimumZoom);
 
@@ -180,7 +186,7 @@ const ImageCropper: FC<ImageCropperProps> = ({
               crop={crop}
               zoom={zoom}
               maxZoom={maximumZoom}
-              aspect={16 / 9}
+              aspect={aspect}
               rotation={rotation}
               restrictPosition
               minZoom={minimumZoom}
@@ -197,6 +203,20 @@ const ImageCropper: FC<ImageCropperProps> = ({
             />
           )}
         </Box>
+        <ToggleButtonGroup
+          exclusive
+          fullWidth
+          disabled={isLoading}
+          value={orientation}
+          onChange={(_, nextOrientation: CropOrientation | null) => {
+            if (nextOrientation !== null) {
+              setOrientation(nextOrientation);
+            }
+          }}
+        >
+          <ToggleButton value="landscape">横16:9</ToggleButton>
+          <ToggleButton value="portrait">縦9:16</ToggleButton>
+        </ToggleButtonGroup>
         <Box sx={{ alignItems: "center", display: "flex", gap: 1 }}>
           <IconButton
             aria-label="回転をリセット"
