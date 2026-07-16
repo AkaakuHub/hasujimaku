@@ -41,20 +41,24 @@ export const getSubtitleLayout = (
   canvasHeight: number,
   quoteLineCount: number,
 ): SubtitleLayout => {
-  const scale = Math.min(canvasWidth / BASE_CANVAS_WIDTH, canvasHeight / BASE_CANVAS_HEIGHT);
+  const landscapeScale = Math.min(
+    canvasWidth / BASE_CANVAS_WIDTH,
+    canvasHeight / BASE_CANVAS_HEIGHT,
+  );
+  const isPortrait = canvasHeight > canvasWidth;
+  const fontScale = isPortrait ? canvasWidth / BASE_CANVAS_HEIGHT : landscapeScale;
+  const lastQuoteY = canvasHeight - BASE_QUOTE_BOTTOM_OFFSET * fontScale;
   const quoteYPositions = Array.from(
     { length: quoteLineCount },
-    (_, index) =>
-      canvasHeight -
-      (BASE_QUOTE_BOTTOM_OFFSET + (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT) * scale,
+    (_, index) => lastQuoteY - (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT * fontScale,
   );
 
   return {
-    nameFontSize: BASE_NAME_FONT_SIZE * scale,
-    nameY: canvasHeight - BASE_NAME_BOTTOM_OFFSET * scale,
-    quoteFontSize: BASE_QUOTE_FONT_SIZE * scale,
-    quoteLetterSpacing: BASE_QUOTE_LETTER_SPACING * scale,
+    nameFontSize: BASE_NAME_FONT_SIZE * fontScale,
+    nameY: lastQuoteY + (BASE_QUOTE_BOTTOM_OFFSET - BASE_NAME_BOTTOM_OFFSET) * fontScale,
+    quoteFontSize: BASE_QUOTE_FONT_SIZE * fontScale,
+    quoteLetterSpacing: BASE_QUOTE_LETTER_SPACING * fontScale,
     quoteYPositions,
-    strokeWidth: BASE_STROKE_WIDTH * scale,
+    strokeWidth: BASE_STROKE_WIDTH * fontScale,
   };
 };

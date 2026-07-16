@@ -43,11 +43,14 @@ describe("getSubtitleLayout", () => {
     expect(layout.nameY).toBeCloseTo(1000 - 66 * scale);
   });
 
-  it("縦9:16でも横幅を基準に文字と位置を縮小する", () => {
+  it("縦9:16では文字を短辺、下端位置を高さに合わせて計算する", () => {
     const layout = getSubtitleLayout(1000, 1778, 2);
-    const scale = 1000 / 1920;
+    const fontScale = 1000 / 1080;
 
-    expect(layout.quoteFontSize).toBeCloseTo(52 * scale);
-    expect(layout.quoteYPositions).toEqual([1778 - 216 * scale, 1778 - 155 * scale]);
+    expect(layout.quoteFontSize).toBeCloseTo(52 * fontScale);
+    expect(layout.quoteLetterSpacing).toBeCloseTo(2 * fontScale);
+    expect(layout.strokeWidth).toBeCloseTo(6 * fontScale);
+    expect(layout.quoteYPositions).toEqual([1778 - 216 * fontScale, 1778 - 155 * fontScale]);
+    expect(layout.nameY).toBeCloseTo(1778 - 66 * fontScale);
   });
 });
