@@ -18,6 +18,7 @@ import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
 import { getUnsupportedKleeOneCharacters } from "../../lib/kleeOneUnsupportedCharacters";
 import { shareText } from "../../lib/shareText";
+import { shareImage } from "../../lib/shareImage";
 import { themes } from "../../lib/themes";
 import { hasAtMostTwoLines } from "../../lib/quote";
 import { queryType } from "../../types";
@@ -186,7 +187,7 @@ export default function Page() {
                         const file = new File([blob], "hasunosora_jimaku.png", {
                           type: "image/png",
                         });
-                        await navigator.share({ text: shareText, files: [file] });
+                        await shareImage(() => navigator.share({ text: shareText, files: [file] }));
                       }}
                     >
                       画像を共有
