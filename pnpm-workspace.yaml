@@ -1,4 +1,7 @@
 allowBuilds:
   "@parcel/watcher": true
-  lefthook: set this to true or false
+  esbuild: true
+  lefthook: true
+  sharp: true
   unrs-resolver: true
+  workerd: true
