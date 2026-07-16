@@ -21,7 +21,19 @@ describe("getSubtitleLayout", () => {
       quoteLetterSpacing: 2,
       quoteYPositions: [925],
       strokeWidth: 6,
+      watermarkFontSize: 20,
+      watermarkX: 36,
+      watermarkY: 1050,
     });
+  });
+
+  it("透かしを左下から一定の余白で配置する", () => {
+    const layout = getSubtitleLayout(1000, 1778, 1);
+    const scale = 1000 / 1080;
+
+    expect(layout.watermarkFontSize).toBeCloseTo(20 * scale);
+    expect(layout.watermarkX).toBeCloseTo(36 * scale);
+    expect(layout.watermarkY).toBeCloseTo(1778 - 30 * scale);
   });
 
   it("1920x1080で2行の旧レイアウトを維持する", () => {

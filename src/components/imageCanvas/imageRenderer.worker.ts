@@ -47,8 +47,9 @@ const createText = (
   letterSpacing: number,
   textX: number,
   strokeWidth: number,
+  textAnchor: "middle" | "start" = "middle",
 ): string =>
-  `<text x="${textX}" y="${y}" fill="#e6e6e6" stroke="#121311" stroke-width="${strokeWidth}" paint-order="stroke fill" text-anchor="middle" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
+  `<text x="${textX}" y="${y}" fill="#e6e6e6" stroke="#121311" stroke-width="${strokeWidth}" paint-order="stroke fill" text-anchor="${textAnchor}" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
 
 interface ImageSize {
   height: number;
@@ -98,8 +99,17 @@ const createSubtitleSvg = async ({
     textX,
     subtitleLayout.strokeWidth,
   );
+  const watermarkText = createText(
+    "この画像は#活動記録字幕ジェネレーターによって作成されました。",
+    subtitleLayout.watermarkY,
+    subtitleLayout.watermarkFontSize,
+    0,
+    subtitleLayout.watermarkX,
+    subtitleLayout.strokeWidth * 0.5,
+    "start",
+  );
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}${watermarkText}</svg>`;
 };
 
 const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {

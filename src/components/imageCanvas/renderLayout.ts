@@ -8,6 +8,9 @@ const BASE_STROKE_WIDTH = 6;
 const BASE_QUOTE_BOTTOM_OFFSET = 155;
 const BASE_QUOTE_LINE_HEIGHT = 61;
 const BASE_NAME_FROM_QUOTE_GAP = 89;
+const BASE_WATERMARK_FONT_SIZE = 20;
+const BASE_WATERMARK_LEFT_OFFSET = 36;
+const BASE_WATERMARK_BOTTOM_OFFSET = 30;
 
 interface ImageCanvasSize {
   height: number;
@@ -21,6 +24,9 @@ export interface SubtitleLayout {
   quoteLetterSpacing: number;
   quoteYPositions: number[];
   strokeWidth: number;
+  watermarkFontSize: number;
+  watermarkX: number;
+  watermarkY: number;
 }
 
 export const getCanvasSize = (imageWidth: number, imageHeight: number): ImageCanvasSize => {
@@ -73,5 +79,8 @@ export const getSubtitleLayout = (
     quoteLetterSpacing: BASE_QUOTE_LETTER_SPACING * textScale,
     quoteYPositions,
     strokeWidth: BASE_STROKE_WIDTH * textScale,
+    watermarkFontSize: BASE_WATERMARK_FONT_SIZE * textScale,
+    watermarkX: BASE_WATERMARK_LEFT_OFFSET * textScale,
+    watermarkY: canvasHeight - BASE_WATERMARK_BOTTOM_OFFSET * textScale,
   };
 };
