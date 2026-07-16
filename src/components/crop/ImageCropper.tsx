@@ -35,7 +35,11 @@ interface Size {
   width: number;
 }
 
-const getMinimumZoom = (mediaSize: Size | null, cropSize: Size | null, rotation: number): number => {
+const getMinimumZoom = (
+  mediaSize: Size | null,
+  cropSize: Size | null,
+  rotation: number,
+): number => {
   if (!mediaSize || !cropSize) {
     return 1;
   }
@@ -240,8 +244,12 @@ const ImageCropper: FC<ImageCropperProps> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button disabled={isLoading} onClick={onCancel}>キャンセル</Button>
-        <Button disabled={isLoading} onClick={onSkipCrop}>元画像を使用</Button>
+        <Button disabled={isLoading} onClick={onCancel}>
+          キャンセル
+        </Button>
+        <Button disabled={isLoading} onClick={onSkipCrop}>
+          元画像を使用
+        </Button>
         <Button disabled={isLoading} variant="contained" onClick={handleComplete}>
           決定
         </Button>

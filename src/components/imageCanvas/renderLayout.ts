@@ -45,7 +45,8 @@ export const getSubtitleLayout = (
   const quoteYPositions = Array.from(
     { length: quoteLineCount },
     (_, index) =>
-      canvasHeight - (BASE_QUOTE_BOTTOM_OFFSET + (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT) * scale,
+      canvasHeight -
+      (BASE_QUOTE_BOTTOM_OFFSET + (quoteLineCount - index - 1) * BASE_QUOTE_LINE_HEIGHT) * scale,
   );
 
   return {

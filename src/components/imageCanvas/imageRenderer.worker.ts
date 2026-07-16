@@ -70,7 +70,10 @@ const createSubtitleSvg = async ({
   quote,
 }: ImageRenderInput): Promise<string> => {
   const imageSize = await getImageSize(baseImageBase64);
-  const { width: canvasWidth, height: canvasHeight } = getCanvasSize(imageSize.width, imageSize.height);
+  const { width: canvasWidth, height: canvasHeight } = getCanvasSize(
+    imageSize.width,
+    imageSize.height,
+  );
   const quoteLines = quote.split("\n");
   const subtitleLayout = getSubtitleLayout(canvasWidth, canvasHeight, quoteLines.length);
   const textX = canvasWidth / 2;
