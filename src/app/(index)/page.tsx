@@ -5,8 +5,7 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  List,
-  ListItem,
+  Link,
   Stack,
   TextField,
   Typography,
@@ -24,6 +23,7 @@ import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
 import { themes } from "../../lib/themes";
 import { queryType } from "../../types";
+import ItemList from "../../components/design/ItemList";
 
 const cardSx = {
   width: "100%",
@@ -91,51 +91,21 @@ export default function Page() {
       >
         <Stack spacing={4} sx={{ mx: "auto", maxWidth: 1520, alignItems: "center" }}>
           <Card sx={{ ...cardSx, maxWidth: 600 }}>
-            <CardContent sx={{ textAlign: "center" }}>
+            <CardContent>
               <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
                 活動記録の字幕風の画像を生成します。
               </Typography>
+              {ItemList({
+                items: [
+                  "画像はすべてローカルで処理されます。",
+                  "公序良俗の範囲でお使いください。",
+                  "作成された画像に関して、一切の責任を負いません。",
+                ],
+              })}
               <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-                画像はすべてローカルで処理されます。
+                ※2026年7月16日追記:
+                公式画像との見分けが付かなくなるというご意見を頂いたため、透かしが入ります。ご了承ください。
               </Typography>
-
-              <List
-                component="ul"
-                disablePadding
-                sx={{
-                  mt: 2,
-                  mb: 0,
-                  pl: 3,
-                  textAlign: "left",
-                  listStyleType: "disc",
-                }}
-              >
-                <ListItem
-                  component="li"
-                  disableGutters
-                  sx={{
-                    display: "list-item",
-                    py: 0.25,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-                    公序良俗の範囲で自由にお使いください。
-                  </Typography>
-                </ListItem>
-
-                <ListItem
-                  component="li"
-                  disableGutters
-                  sx={{
-                    display: "list-item",
-                    py: 0.25,
-                  }}
-                >
-                  <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-                    作成された画像に関して、一切の責任を負いません。
-                  </Typography>
-                </ListItem>
-              </List>
             </CardContent>
           </Card>
 
@@ -279,17 +249,17 @@ export default function Page() {
                 </Stack>
               </CardContent>
             </Card>
-            <Card sx={{ ...cardSx, maxWidth: 600 }}>
-              <CardContent sx={{ textAlign: "center" }}>
-                <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-                  公式画像との見分けが付かなくなるという問題点を頂いたため、現在透かしが入ります。ご了承ください。
-                </Typography>
-              </CardContent>
-            </Card>
           </Stack>
-
           <Typography variant="body2" sx={{ color: "common.black" }}>
-            使用フォント:Klee One
+            使用フォント:
+            <Link
+              href="https://fonts.google.com/specimen/Klee+One"
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ ml: 0.5 }}
+            >
+              Klee One
+            </Link>
           </Typography>
         </Stack>
       </Box>
