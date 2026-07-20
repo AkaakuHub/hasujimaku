@@ -102,10 +102,6 @@ export default function Page() {
                   "作成された画像に関して、一切の責任を負いません。",
                 ],
               })}
-              <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-                ※2026年7月16日追記:
-                公式画像との見分けが付かなくなるというご意見を頂いたため、透かしが入ります。ご了承ください。
-              </Typography>
             </CardContent>
           </Card>
 
@@ -260,6 +256,9 @@ export default function Page() {
             >
               Klee One
             </Link>
+          </Typography>
+          <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
+            公式画像との見分けが付かなくなるというご意見を頂いたため、透かしが入ります。
           </Typography>
         </Stack>
       </Box>
