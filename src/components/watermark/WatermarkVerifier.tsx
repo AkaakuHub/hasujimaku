@@ -1,16 +1,7 @@
 import { useEffect, useState } from "react";
-import ImageSearchIcon from "@mui/icons-material/ImageSearch";
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
 
+import ImageSelectButton from "../design/ImageSelectButton";
 import { readImagePixels } from "../../lib/imagePixels";
 import { detectTrustMark } from "../../lib/trustMarkRuntime";
 import { trustMarkDetectionThreshold, type TrustMarkDetection } from "../../lib/trustMark";
@@ -65,12 +56,14 @@ const WatermarkVerifier = () => {
             <Typography variant="h5" component="h2" gutterBottom>
               透かしを検証
             </Typography>
+            <Typography variant="body2" gutterBottom>
+              このツールで作られた画像かどうかを確認します。
+            </Typography>
             <Typography variant="body2">
-              画像に埋め込まれた活動記録字幕ジェネレーターの識別信号を確認します。
+              画像が劣化したり、強く加工されたりすると、正しく判定できない場合があります。
             </Typography>
           </Box>
-          <Button component="label" variant="contained" startIcon={<ImageSearchIcon />}>
-            画像を選択
+          <ImageSelectButton component="label">
             <input
               hidden
               type="file"
@@ -83,7 +76,7 @@ const WatermarkVerifier = () => {
                 event.target.value = "";
               }}
             />
-          </Button>
+          </ImageSelectButton>
           {previewUrl && (
             <Box
               component="img"

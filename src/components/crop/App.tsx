@@ -1,29 +1,22 @@
 import { lazy, Suspense, useRef, useState, type FC } from "react";
 import ImageUploading, { type ImageListType } from "react-images-uploading";
-import { Box, Button, type ButtonProps } from "@mui/material";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
+import { Box } from "@mui/material";
 
+import ImageSelectButton from "../design/ImageSelectButton";
 import { normalizeImage } from "./cropUtils";
 
 const ImageCropper = lazy(() => import("./ImageCropper"));
 
-interface ImageUploadingButtonProps extends Omit<ButtonProps, "onChange" | "value"> {
+interface ImageUploadingButtonProps {
   value: ImageListType;
   onChange: (image: ImageListType) => void;
 }
 
-const ImageUploadingButton: FC<ImageUploadingButtonProps> = ({ value, onChange, ...props }) => {
+const ImageUploadingButton: FC<ImageUploadingButtonProps> = ({ value, onChange }) => {
   return (
     <ImageUploading value={value} onChange={onChange}>
       {({ onImageUpload, onImageUpdate }) => (
-        <Button
-          color="primary"
-          onClick={value.length === 0 ? onImageUpload : () => onImageUpdate(0)}
-          startIcon={<FileUploadIcon />}
-          {...props}
-        >
-          画像を選択
-        </Button>
+        <ImageSelectButton onClick={value.length === 0 ? onImageUpload : () => onImageUpdate(0)} />
       )}
     </ImageUploading>
   );
