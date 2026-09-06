@@ -274,7 +274,7 @@ export default function Page() {
               </Link>
             </Typography>
             <Typography variant="body2" sx={{ lineHeight: 1.8 }}>
-              生成画像には、画素から検証できる不可視の透かしが入ります。
+              生成画像には不可視の透かしが入ります。
             </Typography>
           </Stack>
           {selectedTab === 1 && (

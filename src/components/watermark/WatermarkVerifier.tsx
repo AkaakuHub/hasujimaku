@@ -66,7 +66,7 @@ const WatermarkVerifier = () => {
               透かしを検証
             </Typography>
             <Typography variant="body2">
-              画像の画素に埋め込まれた活動記録字幕ジェネレーターの識別信号を確認します。
+              画像に埋め込まれた活動記録字幕ジェネレーターの識別信号を確認します。
             </Typography>
           </Box>
           <Button component="label" variant="contained" startIcon={<ImageSearchIcon />}>
@@ -94,14 +94,20 @@ const WatermarkVerifier = () => {
           )}
           {isVerifying && <CircularProgress aria-label="透かしを検証中" />}
           {result && (
-            <Alert severity={result.detected ? "success" : "info"} sx={{ width: "100%" }}>
+            <Alert
+              severity={result.detected ? "success" : "info"}
+              sx={{ width: "100%", alignItems: "center", "& .MuiAlert-icon": { py: 0 } }}
+            >
               <Typography sx={{ fontWeight: 700 }}>
                 {result.detected
                   ? "このツールで作成された画像です。"
                   : "このツールの透かしを確認できませんでした。"}
               </Typography>
+              <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
+                {result.fileName}
+              </Typography>
               <Typography variant="body2">
-                {result.fileName}・信号一致率{Math.round(result.matchRate * 100)}%（判定基準
+                信号一致率{Math.round(result.matchRate * 100)}%（判定基準
                 {Math.round(trustMarkDetectionThreshold * 100)}%以上）
               </Typography>
             </Alert>
