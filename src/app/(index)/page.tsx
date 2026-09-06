@@ -41,7 +41,7 @@ export default function Page() {
     baseImageBase64: "",
   });
   const [baseImageBase64, setBaseImageBase64] = useState("");
-  const [resultImageUrl, setResultImageUrl] = useState("/card.webp");
+  const [resultImageUrl, setResultImageUrl] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [renderingError, setRenderingError] = useState<string | null>(null);
   const [themeColors, setThemeColors] = useState<string[]>(["", ""]);
@@ -65,7 +65,7 @@ export default function Page() {
     renderInput?.quote === queryData.quote &&
     renderInput?.name === queryData.name;
   const canUseResult =
-    isCurrentResult && renderingError === null && !isFetching && resultImageUrl !== "/card.webp";
+    isCurrentResult && renderingError === null && !isFetching && resultImageUrl !== "";
 
   useEffect(() => {
     changeThemeColor();
@@ -209,20 +209,40 @@ export default function Page() {
               <Card sx={{ ...cardSx, flex: 1, minWidth: 0 }}>
                 <CardContent>
                   <Stack spacing={2} sx={{ alignItems: "center" }}>
-                    <Box
-                      component="img"
-                      src={resultImageUrl}
-                      alt="生成した画像"
-                      width={720}
-                      height={405}
-                      sx={{
-                        width: "100%",
-                        height: "auto",
-                        maxWidth: 720,
-                        border: 2,
-                        borderColor: "common.black",
-                      }}
-                    />
+                    {resultImageUrl === "" ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          width: "100%",
+                          maxWidth: 720,
+                          aspectRatio: "16 / 9",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: "#ddd",
+                          border: 2,
+                          borderColor: "common.black",
+                        }}
+                      >
+                        <Typography variant="h5" sx={{ textAlign: "center" }}>
+                          ここに画像が生成されます
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box
+                        component="img"
+                        src={resultImageUrl}
+                        alt="生成した画像"
+                        width={720}
+                        height={405}
+                        sx={{
+                          width: "100%",
+                          height: "auto",
+                          maxWidth: 720,
+                          border: 2,
+                          borderColor: "common.black",
+                        }}
+                      />
+                    )}
                     <ImageCanvas
                       baseImageBase64={renderInput?.baseImageBase64 ?? ""}
                       canRender={renderInput !== null}
