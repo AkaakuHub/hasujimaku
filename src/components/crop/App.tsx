@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState, type FC } from "react";
+import { lazy, memo, Suspense, useRef, useState, type FC } from "react";
 import ImageUploading, { type ImageListType } from "react-images-uploading";
 import { Box } from "@mui/material";
 
@@ -123,4 +123,4 @@ const App: FC<Props> = ({ setBaseImageBase64 }) => {
   );
 };
 
-export default App;
+export default memo(App);

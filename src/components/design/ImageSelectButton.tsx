@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
+import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import { Button, type ButtonProps } from "@mui/material";
 
 interface ImageSelectButtonProps extends Omit<ButtonProps, "children" | "startIcon"> {
@@ -7,7 +7,7 @@ interface ImageSelectButtonProps extends Omit<ButtonProps, "children" | "startIc
 }
 
 const ImageSelectButton: FC<ImageSelectButtonProps> = ({ children, ...buttonProps }) => (
-  <Button variant="contained" startIcon={<FileUploadIcon />} {...buttonProps}>
+  <Button variant="contained" startIcon={<ImageSearchIcon />} {...buttonProps}>
     画像を選択
     {children}
   </Button>

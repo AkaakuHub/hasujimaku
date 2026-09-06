@@ -1,4 +1,4 @@
-import { type Dispatch, type SetStateAction, useEffect, useRef } from "react";
+import { memo, type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 
 import { renderImage } from "./imageRenderer";
 
@@ -12,8 +12,6 @@ interface ImageCanvasProps {
   setResultImageUrl: Dispatch<SetStateAction<string>>;
   setIsFetching: Dispatch<SetStateAction<boolean>>;
 }
-
-const renderingDelay = 150;
 
 const ImageCanvas = ({
   baseImageBase64,
@@ -43,42 +41,39 @@ const ImageCanvas = ({
     }
 
     let cancelled = false;
-    const timeoutId = window.setTimeout(() => {
-      const render = async () => {
-        setIsFetching(true);
-        setRenderingError(null);
+    const render = async () => {
+      setIsFetching(true);
+      setRenderingError(null);
 
-        try {
-          const blob = await renderImage({ baseImageBase64, quote, name });
-          if (cancelled) {
-            return;
-          }
-
-          const resultImageUrl = URL.createObjectURL(blob);
-          if (resultImageUrlRef.current) {
-            URL.revokeObjectURL(resultImageUrlRef.current);
-          }
-          resultImageUrlRef.current = resultImageUrl;
-          setResultImageUrl(resultImageUrl);
-        } catch (error) {
-          if (!cancelled) {
-            setRenderingError(
-              error instanceof Error ? error.message : "画像を生成できませんでした。",
-            );
-          }
-        } finally {
-          if (!cancelled) {
-            setIsFetching(false);
-          }
+      try {
+        const blob = await renderImage({ baseImageBase64, quote, name });
+        if (cancelled) {
+          return;
         }
-      };
 
-      void render();
-    }, renderingDelay);
+        const resultImageUrl = URL.createObjectURL(blob);
+        if (resultImageUrlRef.current) {
+          URL.revokeObjectURL(resultImageUrlRef.current);
+        }
+        resultImageUrlRef.current = resultImageUrl;
+        setResultImageUrl(resultImageUrl);
+      } catch (error) {
+        if (!cancelled) {
+          setRenderingError(
+            error instanceof Error ? error.message : "画像を生成できませんでした。",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetching(false);
+        }
+      }
+    };
+
+    void render();
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
     };
   }, [
     baseImageBase64,
@@ -94,4 +89,4 @@ const ImageCanvas = ({
   return null;
 };
 
-export default ImageCanvas;
+export default memo(ImageCanvas);
