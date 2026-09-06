@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Alert,
   Link,
   Stack,
   Tab,
@@ -19,6 +20,7 @@ import Footer from "../../components/footer/footer";
 import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
 import ImageDetailsForm, { type ImageDetails } from "../../components/imageCanvas/ImageDetailsForm";
+import LazyLoadBoundary from "../../components/LazyLoadBoundary";
 import { preloadImageRenderer } from "../../components/imageCanvas/imageRenderer";
 import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
@@ -236,9 +238,13 @@ export default function Page() {
             </Typography>
           </Stack>
           {selectedTab === 1 && (
-            <Suspense fallback={<CircularProgress aria-label="検証機能を読み込み中" />}>
-              <WatermarkVerifier />
-            </Suspense>
+            <LazyLoadBoundary
+              fallback={<Alert severity="error">検証機能を読み込めませんでした。</Alert>}
+            >
+              <Suspense fallback={<CircularProgress aria-label="検証機能を読み込み中" />}>
+                <WatermarkVerifier />
+              </Suspense>
+            </LazyLoadBoundary>
           )}
         </Stack>
       </Box>

@@ -3,17 +3,22 @@ import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } fr
 
 import ImageSelectButton from "../design/ImageSelectButton";
 import { readImagePixels } from "../../lib/imagePixels";
-import { detectTrustMark } from "../../lib/trustMarkRuntime";
-import { trustMarkDetectionThreshold, type TrustMarkDetection } from "../../lib/trustMark";
+import { trustMarkDetectionThreshold } from "../../lib/trustMark";
+import {
+  type DetectTrustMark,
+  type WatermarkVerificationResult,
+  verifyWatermark,
+} from "../../lib/watermarkVerification";
 
-interface VerificationResult extends TrustMarkDetection {
-  fileName: string;
-}
+const loadTrustMarkDetector = async (): Promise<DetectTrustMark> => {
+  const { detectTrustMark } = await import("../../lib/trustMarkRuntime");
+  return detectTrustMark;
+};
 
 const WatermarkVerifier = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [result, setResult] = useState<VerificationResult | null>(null);
+  const [result, setResult] = useState<WatermarkVerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(
@@ -35,8 +40,7 @@ const WatermarkVerifier = () => {
     setError(null);
 
     try {
-      const { height, pixels, width } = await readImagePixels(file);
-      setResult({ ...(await detectTrustMark(pixels, width, height)), fileName: file.name });
+      setResult(await verifyWatermark(file, readImagePixels, loadTrustMarkDetector));
     } catch (verificationError) {
       setError(
         verificationError instanceof Error
