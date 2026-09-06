@@ -1,15 +1,6 @@
-import type { ImagePixels } from "./imagePixels";
 import type { TrustMarkDetection } from "./trustMark";
 
-export type DetectTrustMark = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-) => Promise<TrustMarkDetection>;
-
-export type LoadTrustMarkDetector = () => Promise<DetectTrustMark>;
-
-export type ReadImagePixels = (image: Blob) => Promise<ImagePixels>;
+export type VerifyWatermarkImage = (image: Blob) => Promise<TrustMarkDetection>;
 
 export interface WatermarkVerificationResult extends TrustMarkDetection {
   fileName: string;
@@ -17,11 +8,7 @@ export interface WatermarkVerificationResult extends TrustMarkDetection {
 
 export const verifyWatermark = async (
   image: Blob & { name: string },
-  readImagePixels: ReadImagePixels,
-  loadTrustMarkDetector: LoadTrustMarkDetector,
+  verifyWatermarkImage: VerifyWatermarkImage,
 ): Promise<WatermarkVerificationResult> => {
-  const { height, pixels, width } = await readImagePixels(image);
-  const detectTrustMark = await loadTrustMarkDetector();
-
-  return { ...(await detectTrustMark(pixels, width, height)), fileName: image.name };
+  return { ...(await verifyWatermarkImage(image)), fileName: image.name };
 };

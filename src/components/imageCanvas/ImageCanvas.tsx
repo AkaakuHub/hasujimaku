@@ -1,6 +1,6 @@
 import { memo, type Dispatch, type SetStateAction, useEffect, useRef } from "react";
 
-import { renderImage } from "./imageRenderer";
+import { renderImage } from "../../lib/imageProcessor";
 
 interface ImageCanvasProps {
   baseImageBase64: string;

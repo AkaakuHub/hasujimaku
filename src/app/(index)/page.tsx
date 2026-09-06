@@ -16,12 +16,13 @@ import IosShareIcon from "@mui/icons-material/IosShare";
 import "@fontsource/klee-one/400.css";
 
 import CropApp from "../../components/crop/App";
+import BrowserCompatibilityNotice from "../../components/BrowserCompatibilityNotice";
 import Footer from "../../components/footer/footer";
 import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
 import ImageDetailsForm, { type ImageDetails } from "../../components/imageCanvas/ImageDetailsForm";
 import LazyLoadBoundary from "../../components/LazyLoadBoundary";
-import { preloadImageRenderer } from "../../components/imageCanvas/imageRenderer";
+import { checkImageProcessorCompatibility, preloadImageRenderer } from "../../lib/imageProcessor";
 import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
 import { themes } from "../../lib/themes";
@@ -46,6 +47,7 @@ export default function Page() {
   const [selectedTab, setSelectedTab] = useState(0);
   const [renderInput, setRenderInput] = useState<queryType | null>(null);
   const [renderRequestId, setRenderRequestId] = useState(0);
+  const [unsupportedBrowserFeatures, setUnsupportedBrowserFeatures] = useState<string[]>([]);
   const changeThemeColor = () => {
     const theme = themes[Math.floor(Math.random() * themes.length)];
     setThemeColors([...theme.colors]);
@@ -68,7 +70,26 @@ export default function Page() {
 
   useEffect(() => {
     changeThemeColor();
-    preloadImageRenderer();
+    let active = true;
+
+    void checkImageProcessorCompatibility()
+      .then((unsupportedFeatures) => {
+        if (active) {
+          setUnsupportedBrowserFeatures(unsupportedFeatures);
+          if (unsupportedFeatures.length === 0) {
+            preloadImageRenderer();
+          }
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setUnsupportedBrowserFeatures(["画像処理Worker"]);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -248,6 +269,7 @@ export default function Page() {
         </Stack>
       </Box>
       <Footer themeName={themeName} />
+      <BrowserCompatibilityNotice unsupportedFeatures={unsupportedBrowserFeatures} />
     </Box>
   );
 }

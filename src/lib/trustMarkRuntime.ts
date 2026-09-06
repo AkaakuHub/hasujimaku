@@ -45,16 +45,26 @@ const modelLoaders = {
   encoder: createCachedAsyncLoader(() => fetchModel("encoder")),
 } satisfies Record<ModelType, () => Promise<ArrayBuffer>>;
 
+let sessionCreationQueue = Promise.resolve();
+
 const createSession = async (modelType: ModelType): Promise<ort.InferenceSession> => {
-  const model = await modelLoaders[modelType]();
-  try {
-    return await ort.InferenceSession.create(model, {
-      executionProviders: ["wasm"],
-      graphOptimizationLevel: "all",
-    });
-  } finally {
-    modelLoaders[modelType].clear();
-  }
+  const modelPromise = modelLoaders[modelType]();
+  const sessionPromise = sessionCreationQueue.then(async () => {
+    const model = await modelPromise;
+    try {
+      return await ort.InferenceSession.create(model, {
+        executionProviders: ["wasm"],
+        graphOptimizationLevel: "all",
+      });
+    } finally {
+      modelLoaders[modelType].clear();
+    }
+  });
+  sessionCreationQueue = sessionPromise.then(
+    () => undefined,
+    () => undefined,
+  );
+  return sessionPromise;
 };
 
 const sessionLoaders = {

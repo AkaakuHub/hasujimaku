@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
 
 import ImageSelectButton from "../design/ImageSelectButton";
-import { readImagePixels } from "../../lib/imagePixels";
-import { loadTrustMarkDetector, preloadTrustMarkDetectorModel } from "../../lib/trustMarkDetector";
+import { preloadWatermarkVerifier, verifyWatermarkImage } from "../../lib/imageProcessor";
 import { trustMarkDetectionThreshold } from "../../lib/trustMark";
 import { type WatermarkVerificationResult, verifyWatermark } from "../../lib/watermarkVerification";
 
@@ -17,7 +16,7 @@ const WatermarkVerifier = () => {
   useEffect(() => {
     let active = true;
 
-    void preloadTrustMarkDetectorModel()
+    void preloadWatermarkVerifier()
       .catch((modelError: unknown) => {
         if (active) {
           setError(
@@ -57,7 +56,7 @@ const WatermarkVerifier = () => {
     setError(null);
 
     try {
-      setResult(await verifyWatermark(file, readImagePixels, loadTrustMarkDetector));
+      setResult(await verifyWatermark(file, verifyWatermarkImage));
     } catch (verificationError) {
       setError(
         verificationError instanceof Error

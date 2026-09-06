@@ -1,34 +1,15 @@
-/// <reference lib="webworker" />
-
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import resvgWasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 
-import { createCachedAsyncLoader } from "../../lib/createCachedAsyncLoader";
-import { loadKleeOneFontBuffer } from "../../lib/kleeOneFont";
-import { embedTrustMark, initializeTrustMarkEncoder } from "../../lib/trustMarkRuntime";
-import { getCanvasSize, getSubtitleLayout } from "./renderLayout";
-
-interface ImageRenderInput {
-  baseImageBase64: string;
-  name: string;
-  quote: string;
-}
-
-interface ImageRenderRequest {
-  input: ImageRenderInput;
-  requestId: number;
-  type: "render";
-}
-
-interface ImageRendererInitializeRequest {
-  type: "initialize";
-}
-
-type ImageRenderWorkerRequest = ImageRenderRequest | ImageRendererInitializeRequest;
+import { getCanvasSize, getSubtitleLayout } from "../components/imageCanvas/renderLayout";
+import { createCachedAsyncLoader } from "../lib/createCachedAsyncLoader";
+import type { ImageRenderInput } from "../lib/imageProcessorMessages";
+import { loadKleeOneFontBuffer } from "../lib/kleeOneFont";
+import { embedTrustMark, initializeTrustMarkEncoder } from "../lib/trustMarkRuntime";
 
 const initializeResvg = createCachedAsyncLoader(() => initWasm(fetch(resvgWasmUrl)));
 
-const initializeImageRenderer = createCachedAsyncLoader(async () => {
+export const initializeImageRenderer = createCachedAsyncLoader(async () => {
   const [, fontBuffer] = await Promise.all([
     initializeResvg(),
     loadKleeOneFontBuffer(),
@@ -104,7 +85,7 @@ const createSubtitleSvg = async ({
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}</svg>`;
 };
 
-const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
+export const renderImage = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
   const fontBuffer = await initializeImageRenderer();
   const renderer = new Resvg(await createSubtitleSvg(input), {
     font: { fontBuffers: [fontBuffer] },
@@ -129,20 +110,3 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
     renderer.free();
   }
 };
-
-self.addEventListener("message", (event: MessageEvent<ImageRenderWorkerRequest>) => {
-  const request = event.data;
-  if (request.type === "initialize") {
-    void initializeImageRenderer().catch(() => undefined);
-    return;
-  }
-
-  void render(request.input)
-    .then((png) => {
-      self.postMessage({ png, requestId: request.requestId, type: "success" }, [png]);
-    })
-    .catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : "画像を生成できませんでした。";
-      self.postMessage({ message, requestId: request.requestId, type: "failure" });
-    });
-});
