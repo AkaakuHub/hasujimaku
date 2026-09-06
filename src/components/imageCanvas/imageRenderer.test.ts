@@ -38,10 +38,12 @@ class FailingImageRenderWorker implements ImageRenderWorker {
 }
 
 describe("createImageRenderer", () => {
-  it("初期化要求をWorkerへ送る", () => {
+  it("複数回呼ばれても初期化要求をWorkerへ一度だけ送る", () => {
     const worker = new FakeImageRenderWorker();
+    const renderImage = createImageRenderer(worker);
 
-    createImageRenderer(worker).preload();
+    renderImage.preload();
+    renderImage.preload();
 
     expect(worker.messages).toEqual([{ type: "initialize" }]);
   });

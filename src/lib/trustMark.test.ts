@@ -15,13 +15,21 @@ const createDecoderOutput = (matchingBits: number): Float32Array =>
   });
 
 describe("trustMark", () => {
-  it("長方形画像の中央正方形をモデル入力に変換する", () => {
+  it("長方形画像全体をモデル入力に変換する", () => {
     const pixels = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255]);
 
     expect(createTrustMarkImageTensor(pixels, 3, 1, 1)).toEqual(new Float32Array([-1, 1, -1]));
   });
 
-  it("モデル出力を中央正方形のRGBだけに反映する", () => {
+  it("長方形画像の横幅全体をモデル入力へ標本化する", () => {
+    const pixels = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255]);
+
+    expect(createTrustMarkImageTensor(pixels, 3, 1, 2)).toEqual(
+      new Float32Array([0.5, -1, 0.5, -1, -0.5, -0.5, -0.5, -0.5, -1, 0.5, -1, 0.5]),
+    );
+  });
+
+  it("モデル出力を画像全体のRGBだけに反映する", () => {
     const width = trustMarkEncoderSize + 2;
     const height = trustMarkEncoderSize;
     const pixels = new Uint8ClampedArray(width * height * 4).fill(128);

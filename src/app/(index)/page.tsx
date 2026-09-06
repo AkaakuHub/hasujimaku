@@ -68,6 +68,7 @@ export default function Page() {
 
   useEffect(() => {
     changeThemeColor();
+    preloadImageRenderer();
   }, []);
 
   return (
@@ -96,8 +97,6 @@ export default function Page() {
           </Card>
           <Stack
             spacing={4}
-            onFocusCapture={preloadImageRenderer}
-            onPointerDownCapture={preloadImageRenderer}
             sx={{
               display: selectedTab === 0 ? "flex" : "none",
               width: "100%",

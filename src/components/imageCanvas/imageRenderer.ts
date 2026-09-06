@@ -59,6 +59,7 @@ const isImageRenderResponse = (value: unknown): value is ImageRenderResponse => 
 
 export const createImageRenderer = (worker: ImageRenderWorker): ImageRenderer => {
   let nextRequestId = 0;
+  let hasRequestedPreload = false;
   const pendingRenders = new Map<number, PendingRender>();
 
   worker.addEventListener("message", (event) => {
@@ -91,6 +92,11 @@ export const createImageRenderer = (worker: ImageRenderWorker): ImageRenderer =>
   };
 
   renderImage.preload = () => {
+    if (hasRequestedPreload) {
+      return;
+    }
+
+    hasRequestedPreload = true;
     worker.postMessage({ type: "initialize" });
   };
 

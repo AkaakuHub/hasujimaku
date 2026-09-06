@@ -3,23 +3,40 @@ import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } fr
 
 import ImageSelectButton from "../design/ImageSelectButton";
 import { readImagePixels } from "../../lib/imagePixels";
+import { loadTrustMarkDetector, preloadTrustMarkDetectorModel } from "../../lib/trustMarkDetector";
 import { trustMarkDetectionThreshold } from "../../lib/trustMark";
-import {
-  type DetectTrustMark,
-  type WatermarkVerificationResult,
-  verifyWatermark,
-} from "../../lib/watermarkVerification";
-
-const loadTrustMarkDetector = async (): Promise<DetectTrustMark> => {
-  const { detectTrustMark } = await import("../../lib/trustMarkRuntime");
-  return detectTrustMark;
-};
+import { type WatermarkVerificationResult, verifyWatermark } from "../../lib/watermarkVerification";
 
 const WatermarkVerifier = () => {
+  const [isModelLoading, setIsModelLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<WatermarkVerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void preloadTrustMarkDetectorModel()
+      .catch((modelError: unknown) => {
+        if (active) {
+          setError(
+            modelError instanceof Error
+              ? modelError.message
+              : "透かしモデルを読み込めませんでした。",
+          );
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setIsModelLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(
     () => () => {
@@ -81,6 +98,12 @@ const WatermarkVerifier = () => {
               }}
             />
           </ImageSelectButton>
+          {isModelLoading && (
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+              <CircularProgress size={24} aria-label="検証モデルを読み込み中" />
+              <Typography variant="body2">検証モデルを読み込んでいます。</Typography>
+            </Stack>
+          )}
           {previewUrl && (
             <Box
               component="img"

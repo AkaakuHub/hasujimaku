@@ -1,5 +1,5 @@
 export const trustMarkEncoderSize = 256;
-export const trustMarkDecoderSize = 224;
+export const trustMarkDecoderSize = 256;
 
 export const trustMarkDetectionThreshold = 0.75;
 
@@ -25,6 +25,8 @@ const createSignature = (): Float32Array => {
 };
 
 export const trustMarkSignature = createSignature();
+
+const watermarkStrength = 1.5;
 
 const sampleChannel = (
   pixels: Uint8ClampedArray,
@@ -57,16 +59,13 @@ export const createTrustMarkImageTensor = (
   height: number,
   targetSize: number,
 ): Float32Array => {
-  const squareSize = Math.min(width, height);
-  const offsetX = (width - squareSize) / 2;
-  const offsetY = (height - squareSize) / 2;
   const channelSize = targetSize * targetSize;
   const tensor = new Float32Array(channelSize * 3);
 
   for (let y = 0; y < targetSize; y += 1) {
-    const sourceY = offsetY + ((y + 0.5) * squareSize) / targetSize - 0.5;
+    const sourceY = ((y + 0.5) * height) / targetSize - 0.5;
     for (let x = 0; x < targetSize; x += 1) {
-      const sourceX = offsetX + ((x + 0.5) * squareSize) / targetSize - 0.5;
+      const sourceX = ((x + 0.5) * width) / targetSize - 0.5;
       const tensorIndex = y * targetSize + x;
       tensor[tensorIndex] = sampleChannel(pixels, width, height, sourceX, sourceY, 0) / 127.5 - 1;
       tensor[channelSize + tensorIndex] =
@@ -124,24 +123,20 @@ export const applyTrustMarkOutput = (
     channelMeans[channel] = total / modelPixelCount;
   }
 
-  const squareSize = Math.min(width, height);
-  const offsetX = Math.floor((width - squareSize) / 2);
-  const offsetY = Math.floor((height - squareSize) / 2);
-  const featherSize = Math.max(1, Math.min(50, Math.floor(squareSize * 0.01)));
-  const strength = 0.8 * 1.25;
+  const featherSize = Math.max(1, Math.min(50, Math.floor(Math.min(width, height) * 0.01)));
 
-  for (let y = 0; y < squareSize; y += 1) {
-    const residualY = ((y + 0.5) * trustMarkEncoderSize) / squareSize - 0.5;
-    for (let x = 0; x < squareSize; x += 1) {
-      const residualX = ((x + 0.5) * trustMarkEncoderSize) / squareSize - 0.5;
-      const edgeDistance = Math.min(x + 1, y + 1, squareSize - x, squareSize - y);
+  for (let y = 0; y < height; y += 1) {
+    const residualY = ((y + 0.5) * trustMarkEncoderSize) / height - 0.5;
+    for (let x = 0; x < width; x += 1) {
+      const residualX = ((x + 0.5) * trustMarkEncoderSize) / width - 0.5;
+      const edgeDistance = Math.min(x + 1, y + 1, width - x, height - y);
       const feather = Math.min(1, edgeDistance / featherSize);
-      const pixelIndex = ((offsetY + y) * width + offsetX + x) * 4;
+      const pixelIndex = (y * width + x) * 4;
 
       for (let channel = 0; channel < 3; channel += 1) {
         const adjustment =
           (sampleResidual(residual, channel, residualX, residualY) - channelMeans[channel]) *
-          strength *
+          watermarkStrength *
           127.5 *
           feather;
         pixels[pixelIndex + channel] = clampByte(pixels[pixelIndex + channel] + adjustment);

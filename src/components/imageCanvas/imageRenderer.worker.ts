@@ -3,6 +3,7 @@
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import resvgWasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 
+import { createCachedAsyncLoader } from "../../lib/createCachedAsyncLoader";
 import { loadKleeOneFontBuffer } from "../../lib/kleeOneFont";
 import { embedTrustMark, initializeTrustMarkEncoder } from "../../lib/trustMarkRuntime";
 import { getCanvasSize, getSubtitleLayout } from "./renderLayout";
@@ -25,15 +26,16 @@ interface ImageRendererInitializeRequest {
 
 type ImageRenderWorkerRequest = ImageRenderRequest | ImageRendererInitializeRequest;
 
-let resvgPromise: Promise<void> | undefined;
+const initializeResvg = createCachedAsyncLoader(() => initWasm(fetch(resvgWasmUrl)));
 
-const initializeResvg = (): Promise<void> => {
-  if (!resvgPromise) {
-    resvgPromise = initWasm(fetch(resvgWasmUrl));
-  }
-
-  return resvgPromise;
-};
+const initializeImageRenderer = createCachedAsyncLoader(async () => {
+  const [, fontBuffer] = await Promise.all([
+    initializeResvg(),
+    loadKleeOneFontBuffer(),
+    initializeTrustMarkEncoder(),
+  ]);
+  return fontBuffer;
+});
 
 const escapeXmlAttribute = (value: string): string =>
   value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
@@ -103,7 +105,7 @@ const createSubtitleSvg = async ({
 };
 
 const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
-  const [, fontBuffer] = await Promise.all([initializeResvg(), loadKleeOneFontBuffer()]);
+  const fontBuffer = await initializeImageRenderer();
   const renderer = new Resvg(await createSubtitleSvg(input), {
     font: { fontBuffers: [fontBuffer] },
   });
@@ -131,11 +133,7 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
 self.addEventListener("message", (event: MessageEvent<ImageRenderWorkerRequest>) => {
   const request = event.data;
   if (request.type === "initialize") {
-    void Promise.all([
-      initializeResvg(),
-      loadKleeOneFontBuffer(),
-      initializeTrustMarkEncoder(),
-    ]).catch(() => undefined);
+    void initializeImageRenderer().catch(() => undefined);
     return;
   }
 

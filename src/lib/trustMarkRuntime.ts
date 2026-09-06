@@ -1,5 +1,6 @@
 import * as ort from "onnxruntime-web/wasm";
 
+import { createCachedAsyncLoader } from "./createCachedAsyncLoader";
 import {
   applyTrustMarkOutput,
   createTrustMarkImageTensor,
@@ -11,16 +12,13 @@ import {
 } from "./trustMark";
 
 const modelBaseUrl = "https://cai-watermark.adobe.net/watermarking/trustmark-models";
-const modelCacheName = "trustmark-p-models-v1";
+const modelCacheName = "trustmark-q-models-v1";
 const modelUrls = {
-  decoder: `${modelBaseUrl}/decoder_P.onnx`,
-  encoder: `${modelBaseUrl}/encoder_P.onnx`,
+  decoder: `${modelBaseUrl}/decoder_Q.onnx`,
+  encoder: `${modelBaseUrl}/encoder_Q.onnx`,
 } as const;
 
 type ModelType = keyof typeof modelUrls;
-
-const modelPromises = new Map<ModelType, Promise<ArrayBuffer>>();
-const sessionPromises = new Map<ModelType, Promise<ort.InferenceSession>>();
 
 const fetchModel = async (modelType: ModelType): Promise<ArrayBuffer> => {
   const modelUrl = modelUrls[modelType];
@@ -36,38 +34,36 @@ const fetchModel = async (modelType: ModelType): Promise<ArrayBuffer> => {
   }
 
   if (cache) {
-    await cache.put(modelUrl, response.clone());
+    void cache.put(modelUrl, response.clone()).catch(() => undefined);
   }
 
   return response.arrayBuffer();
 };
 
-const getModel = (modelType: ModelType): Promise<ArrayBuffer> => {
-  const existingPromise = modelPromises.get(modelType);
-  if (existingPromise) {
-    return existingPromise;
-  }
+const modelLoaders = {
+  decoder: createCachedAsyncLoader(() => fetchModel("decoder")),
+  encoder: createCachedAsyncLoader(() => fetchModel("encoder")),
+} satisfies Record<ModelType, () => Promise<ArrayBuffer>>;
 
-  const modelPromise = fetchModel(modelType);
-  modelPromises.set(modelType, modelPromise);
-  return modelPromise;
-};
-
-const getSession = (modelType: ModelType): Promise<ort.InferenceSession> => {
-  const existingPromise = sessionPromises.get(modelType);
-  if (existingPromise) {
-    return existingPromise;
-  }
-
-  const sessionPromise = getModel(modelType).then((model) =>
-    ort.InferenceSession.create(model, {
+const createSession = async (modelType: ModelType): Promise<ort.InferenceSession> => {
+  const model = await modelLoaders[modelType]();
+  try {
+    return await ort.InferenceSession.create(model, {
       executionProviders: ["wasm"],
       graphOptimizationLevel: "all",
-    }),
-  );
-  sessionPromises.set(modelType, sessionPromise);
-  return sessionPromise;
+    });
+  } finally {
+    modelLoaders[modelType].clear();
+  }
 };
+
+const sessionLoaders = {
+  decoder: createCachedAsyncLoader(() => createSession("decoder")),
+  encoder: createCachedAsyncLoader(() => createSession("encoder")),
+} satisfies Record<ModelType, () => Promise<ort.InferenceSession>>;
+
+const getSession = (modelType: ModelType): Promise<ort.InferenceSession> =>
+  sessionLoaders[modelType]();
 
 const getFloatOutput = (
   outputs: ort.InferenceSession.OnnxValueMapType,
@@ -82,6 +78,14 @@ const getFloatOutput = (
 
 export const initializeTrustMarkEncoder = (): Promise<ort.InferenceSession> =>
   getSession("encoder");
+
+export const preloadTrustMarkDecoderModel = createCachedAsyncLoader(async () => {
+  await modelLoaders.decoder();
+});
+
+export const initializeTrustMarkDecoder = async (): Promise<void> => {
+  await getSession("decoder");
+};
 
 export const embedTrustMark = async (
   pixels: Uint8ClampedArray,
