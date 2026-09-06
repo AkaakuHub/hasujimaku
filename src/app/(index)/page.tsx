@@ -183,7 +183,14 @@ export default function Page() {
                           borderColor: "common.black",
                         }}
                       >
-                        <Typography variant="h5" sx={{ textAlign: "center" }}>
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            px: 2,
+                            textAlign: "center",
+                            fontSize: { xs: "1rem", sm: "1.5rem" },
+                          }}
+                        >
                           ここに画像が生成されます
                         </Typography>
                       </Box>
