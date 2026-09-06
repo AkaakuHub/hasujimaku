@@ -3,7 +3,6 @@ import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } fr
 
 import ImageSelectButton from "../design/ImageSelectButton";
 import { preloadWatermarkVerifier, verifyWatermarkImage } from "../../lib/imageProcessor";
-import { trustMarkDetectionThreshold } from "../../lib/trustMark";
 import { type WatermarkVerificationResult, verifyWatermark } from "../../lib/watermarkVerification";
 
 const WatermarkVerifier = () => {
@@ -119,15 +118,11 @@ const WatermarkVerifier = () => {
             >
               <Typography sx={{ fontWeight: 700 }}>
                 {result.detected
-                  ? "このツールで作成された画像です。"
+                  ? "このツールで作成された画像の可能性があります。"
                   : "このツールの透かしを確認できませんでした。"}
               </Typography>
               <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
                 {result.fileName}
-              </Typography>
-              <Typography variant="body2">
-                信号一致率{Math.round(result.matchRate * 100)}%（判定基準
-                {Math.round(trustMarkDetectionThreshold * 100)}%以上）
               </Typography>
             </Alert>
           )}

@@ -1,7 +1,7 @@
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
-export const trustMarkDetectionThreshold = 0.75;
+const trustMarkDetectionThreshold = 0.75;
 
 export interface TrustMarkDetection {
   detected: boolean;

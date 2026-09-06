@@ -1,4 +1,5 @@
 import { createCachedAsyncLoader } from "../lib/createCachedAsyncLoader";
+import { detectLegacyWatermark } from "../lib/legacyWatermark";
 import {
   detectTrustMark,
   initializeTrustMarkDecoder,
@@ -27,6 +28,9 @@ export const verifyWatermark = async (image: Blob) => {
 
     context.drawImage(imageBitmap, 0, 0, width, height);
     const pixels = context.getImageData(0, 0, width, height).data;
+    if (detectLegacyWatermark(pixels, width, height)) {
+      return { detected: true, matchRate: 0 };
+    }
     return detectTrustMark(pixels, width, height);
   } finally {
     imageBitmap.close();
