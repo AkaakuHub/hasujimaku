@@ -21,9 +21,6 @@ describe("getSubtitleLayout", () => {
       quoteLetterSpacing: 2,
       quoteYPositions: [925],
       strokeWidth: 6,
-      watermarkFontSize: 16,
-      watermarkX: 5,
-      watermarkY: 1075,
     });
   });
 

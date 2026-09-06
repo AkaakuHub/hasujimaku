@@ -21,6 +21,7 @@
     "@mui/material": "^9.2.0",
     "@resvg/resvg-wasm": "2.6.2",
     "heic2any": "^0.0.4",
+    "onnxruntime-web": "1.29.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-easy-crop": "^6.2.2",

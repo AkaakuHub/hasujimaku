@@ -7,6 +7,7 @@ interface ImageCanvasProps {
   canRender: boolean;
   quote: string;
   name: string;
+  renderRequestId: number;
   setRenderingError: Dispatch<SetStateAction<string | null>>;
   setResultImageUrl: Dispatch<SetStateAction<string>>;
   setIsFetching: Dispatch<SetStateAction<boolean>>;
@@ -19,6 +20,7 @@ const ImageCanvas = ({
   canRender,
   quote,
   name,
+  renderRequestId,
   setRenderingError,
   setResultImageUrl,
   setIsFetching,
@@ -83,6 +85,7 @@ const ImageCanvas = ({
     canRender,
     name,
     quote,
+    renderRequestId,
     setIsFetching,
     setRenderingError,
     setResultImageUrl,

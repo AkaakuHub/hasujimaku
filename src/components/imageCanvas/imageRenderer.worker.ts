@@ -4,6 +4,7 @@ import { Resvg, initWasm } from "@resvg/resvg-wasm";
 import resvgWasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
 
 import { loadKleeOneFontBuffer } from "../../lib/kleeOneFont";
+import { embedTrustMark, initializeTrustMarkEncoder } from "../../lib/trustMarkRuntime";
 import { getCanvasSize, getSubtitleLayout } from "./renderLayout";
 
 interface ImageRenderInput {
@@ -47,10 +48,8 @@ const createText = (
   letterSpacing: number,
   textX: number,
   strokeWidth: number,
-  textAnchor: "middle" | "start" = "middle",
-  opacity = 1,
 ): string =>
-  `<text x="${textX}" y="${y}" opacity="${opacity}" fill="#e6e6e6" stroke="#121311" stroke-width="${strokeWidth}" paint-order="stroke fill" text-anchor="${textAnchor}" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
+  `<text x="${textX}" y="${y}" fill="#e6e6e6" stroke="#121311" stroke-width="${strokeWidth}" paint-order="stroke fill" text-anchor="middle" font-family="Klee One" font-size="${fontSize}" letter-spacing="${letterSpacing}">${escapeXmlText(text)}</text>`;
 
 interface ImageSize {
   height: number;
@@ -100,18 +99,7 @@ const createSubtitleSvg = async ({
     textX,
     subtitleLayout.strokeWidth,
   );
-  const watermarkText = createText(
-    "#活動記録字幕ジェネレーター",
-    subtitleLayout.watermarkY,
-    subtitleLayout.watermarkFontSize,
-    0,
-    subtitleLayout.watermarkX,
-    subtitleLayout.strokeWidth * 0.5,
-    "start",
-    0.55,
-  );
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}${watermarkText}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 ${canvasWidth} ${canvasHeight}"><image href="${escapeXmlAttribute(baseImageBase64)}" width="${canvasWidth}" height="${canvasHeight}"/>${quoteText}${nameText}</svg>`;
 };
 
 const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
@@ -123,10 +111,15 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
   try {
     const image = renderer.render();
     try {
-      const png = image.asPng();
-      const pngCopy = new Uint8Array(png.byteLength);
-      pngCopy.set(png);
-      return pngCopy.buffer;
+      const pixels = new Uint8ClampedArray(image.pixels);
+      await embedTrustMark(pixels, image.width, image.height);
+      const canvas = new OffscreenCanvas(image.width, image.height);
+      const context = canvas.getContext("2d");
+      if (!context) {
+        throw new Error("画像を生成できませんでした。");
+      }
+      context.putImageData(new ImageData(pixels, image.width, image.height), 0, 0);
+      return (await canvas.convertToBlob({ type: "image/png" })).arrayBuffer();
     } finally {
       image.free();
     }
@@ -138,7 +131,11 @@ const render = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
 self.addEventListener("message", (event: MessageEvent<ImageRenderWorkerRequest>) => {
   const request = event.data;
   if (request.type === "initialize") {
-    void Promise.all([initializeResvg(), loadKleeOneFontBuffer()]).catch(() => undefined);
+    void Promise.all([
+      initializeResvg(),
+      loadKleeOneFontBuffer(),
+      initializeTrustMarkEncoder(),
+    ]).catch(() => undefined);
     return;
   }
 
