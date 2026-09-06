@@ -1,21 +1,11 @@
-import { Resvg, initWasm } from "@resvg/resvg-wasm";
-import resvgWasmUrl from "@resvg/resvg-wasm/index_bg.wasm?url";
-
 import { getCanvasSize, getSubtitleLayout } from "../components/imageCanvas/renderLayout";
 import { createCachedAsyncLoader } from "../lib/createCachedAsyncLoader";
 import type { ImageRenderInput } from "../lib/imageProcessorMessages";
-import { loadKleeOneFontBuffer } from "../lib/kleeOneFont";
 import { embedTrustMark, initializeTrustMarkEncoder } from "../lib/trustMarkRuntime";
-
-const initializeResvg = createCachedAsyncLoader(() => initWasm(fetch(resvgWasmUrl)));
+import { createSvgRenderer, initializeSvgRenderer } from "./svgRenderer";
 
 export const initializeImageRenderer = createCachedAsyncLoader(async () => {
-  const [, fontBuffer] = await Promise.all([
-    initializeResvg(),
-    loadKleeOneFontBuffer(),
-    initializeTrustMarkEncoder(),
-  ]);
-  return fontBuffer;
+  await Promise.all([initializeSvgRenderer(), initializeTrustMarkEncoder()]);
 });
 
 const escapeXmlAttribute = (value: string): string =>
@@ -86,10 +76,8 @@ const createSubtitleSvg = async ({
 };
 
 export const renderImage = async (input: ImageRenderInput): Promise<ArrayBuffer> => {
-  const fontBuffer = await initializeImageRenderer();
-  const renderer = new Resvg(await createSubtitleSvg(input), {
-    font: { fontBuffers: [fontBuffer] },
-  });
+  await initializeImageRenderer();
+  const renderer = await createSvgRenderer(await createSubtitleSvg(input));
 
   try {
     const image = renderer.render();

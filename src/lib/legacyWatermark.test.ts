@@ -1,25 +1,24 @@
 import { readFileSync } from "node:fs";
-import { beforeAll, describe, expect, it } from "vitest";
 import { Resvg, initWasm } from "@resvg/resvg-wasm";
+import { beforeAll, describe, expect, it } from "vitest";
 
-import { detectLegacyWatermark } from "./legacyWatermark";
+import {
+  createLegacyWatermarkTemplate,
+  detectLegacyWatermark,
+  getLegacyWatermarkMatch,
+  legacyWatermarkDetectionThreshold,
+  legacyWatermarkSpecifications,
+  type LegacyWatermarkSpecification,
+  type LegacyWatermarkTemplate,
+} from "./legacyWatermark";
 
-beforeAll(async () => {
-  await initWasm(readFileSync("node_modules/@resvg/resvg-wasm/index_bg.wasm"));
-});
+const canvasWidth = 1920;
+const canvasHeight = 1080;
+const fontBuffer = new Uint8Array(readFileSync("src/assets/fonts/KleeOne-Regular.dat"));
+let templates: LegacyWatermarkTemplate[];
 
-const renderHistoricalWatermark = (
-  text: string,
-  fontSize: number,
-  x: number,
-  y: number,
-  opacity: number,
-): Uint8ClampedArray => {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080"><defs><linearGradient id="background"><stop stop-color="#31506d"/><stop offset="1" stop-color="#7b694e"/></linearGradient></defs><rect width="1920" height="1080" fill="url(#background)"/><text x="${x}" y="${y}" opacity="${opacity}" fill="#e6e6e6" stroke="#121311" stroke-width="3" paint-order="stroke fill" font-family="Klee One" font-size="${fontSize}">${text}</text></svg>`;
-  const renderer = new Resvg(svg, {
-    font: { fontBuffers: [new Uint8Array(readFileSync("src/assets/fonts/KleeOne-Regular.dat"))] },
-  });
-
+const renderSvg = (svg: string): Uint8ClampedArray => {
+  const renderer = new Resvg(svg, { font: { fontBuffers: [fontBuffer] } });
   try {
     const image = renderer.render();
     try {
@@ -30,6 +29,22 @@ const renderHistoricalWatermark = (
   } finally {
     renderer.free();
   }
+};
+
+const renderTemplate = (specification: LegacyWatermarkSpecification): LegacyWatermarkTemplate => {
+  const { height, left, top, width } = specification.region;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${left} ${top} ${width} ${height}"><rect x="${left}" y="${top}" width="${width}" height="${height}" fill="#808080"/><text x="${specification.x}" y="${specification.y}" opacity="${specification.opacity}" fill="#e6e6e6" stroke="#121311" stroke-width="3" paint-order="stroke fill" font-family="Klee One" font-size="${specification.fontSize}">${specification.text}</text></svg>`;
+  return createLegacyWatermarkTemplate(renderSvg(svg), specification);
+};
+
+const renderImage = (
+  specification: LegacyWatermarkSpecification,
+  text = specification.text,
+  offsetX = 0,
+  offsetY = 0,
+): Uint8ClampedArray => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}"><defs><linearGradient id="background"><stop stop-color="#31506d"/><stop offset="1" stop-color="#7b694e"/></linearGradient></defs><rect width="${canvasWidth}" height="${canvasHeight}" fill="url(#background)"/><text x="${specification.x + offsetX}" y="${specification.y + offsetY}" opacity="${specification.opacity}" fill="#e6e6e6" stroke="#121311" stroke-width="3" paint-order="stroke fill" font-family="Klee One" font-size="${specification.fontSize}">${text}</text></svg>`;
+  return renderSvg(svg);
 };
 
 const shrinkImage = (
@@ -59,120 +74,97 @@ const shrinkImage = (
   return resizedPixels;
 };
 
-const createImage = (width: number, height: number): Uint8ClampedArray => {
-  const pixels = new Uint8ClampedArray(width * height * 4);
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const pixelIndex = (y * width + x) * 4;
-      const luminance = 80 + Math.round((x / width) * 40 + (y / height) * 20);
-      pixels.set([luminance, luminance, luminance, 255], pixelIndex);
-    }
-  }
-  return pixels;
-};
-
-const drawRectangle = (
+const addBlockNoise = (
   pixels: Uint8ClampedArray,
   width: number,
-  left: number,
-  top: number,
-  right: number,
-  bottom: number,
-  luminance: number,
-): void => {
-  for (let y = Math.max(0, top); y < bottom; y += 1) {
-    for (let x = Math.max(0, left); x < right; x += 1) {
-      const pixelIndex = (y * width + x) * 4;
-      pixels.set([luminance, luminance, luminance, 255], pixelIndex);
+  quantizationStep: number,
+): Uint8ClampedArray => {
+  const noisyPixels = new Uint8ClampedArray(pixels);
+  for (let index = 0; index < noisyPixels.length; index += 4) {
+    const x = (index / 4) % width;
+    const y = Math.floor(index / 4 / width);
+    const blockOffset = (((Math.floor(x / 8) + Math.floor(y / 8)) % 3) - 1) * 3;
+    for (let channel = 0; channel < 3; channel += 1) {
+      noisyPixels[index + channel] =
+        Math.round(noisyPixels[index + channel] / quantizationStep) * quantizationStep +
+        blockOffset;
     }
   }
+  return noisyPixels;
 };
 
-const drawLegacyTextGeometry = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  scale: number,
-): void => {
-  const fontSize = 16 * scale;
-  const characterWidth = fontSize;
-  const baseline = height - 5 * scale;
-  for (let characterIndex = 0; characterIndex < 14; characterIndex += 1) {
-    const left = Math.round(5 * scale + characterIndex * characterWidth);
-    const right = Math.round(left + characterWidth * 0.8);
-    const top = Math.round(baseline - fontSize);
-    const bottom = Math.min(height, Math.round(baseline + fontSize * 0.15));
-    const strokeWidth = Math.max(1, Math.round(2 * scale));
-    drawRectangle(pixels, width, left, top, right, bottom, 35);
-    drawRectangle(
-      pixels,
-      width,
-      left + strokeWidth,
-      top + strokeWidth,
-      right - strokeWidth,
-      bottom - strokeWidth,
-      215,
-    );
-  }
-};
+beforeAll(async () => {
+  await initWasm(readFileSync("node_modules/@resvg/resvg-wasm/index_bg.wasm"));
+  templates = legacyWatermarkSpecifications.map(renderTemplate);
+});
 
 describe("detectLegacyWatermark", () => {
-  it.each([
-    {
-      fontSize: 20,
-      opacity: 1,
-      text: "この画像は#活動記録字幕ジェネレーターによって作成されました。",
-      x: 36,
-      y: 1050,
+  it.each(legacyWatermarkSpecifications.map((specification, index) => ({ index, specification })))(
+    "履歴上の旧透かし$indexを検出する",
+    ({ specification }) => {
+      const pixels = renderImage(specification);
+
+      expect(
+        getLegacyWatermarkMatch(pixels, canvasWidth, canvasHeight, templates),
+      ).toBeGreaterThanOrEqual(legacyWatermarkDetectionThreshold);
     },
-    {
-      fontSize: 16,
-      opacity: 0.55,
-      text: "#活動記録字幕ジェネレーター",
-      x: 5,
-      y: 1075,
-    },
-  ])("履歴上の$textを描画した画像を検出する", ({ text, fontSize, x, y, opacity }) => {
-    const pixels = renderHistoricalWatermark(text, fontSize, x, y, opacity);
+  );
 
-    expect(detectLegacyWatermark(pixels, 1920, 1080)).toBe(true);
+  it("半透明な旧透かしを50%へ縮小し、ブロックノイズを加えても検出する", () => {
+    const specification = legacyWatermarkSpecifications[2];
+    const resizedPixels = shrinkImage(renderImage(specification), canvasWidth, canvasHeight, 2);
+    const noisyPixels = addBlockNoise(resizedPixels, 960, 12);
+
+    expect(getLegacyWatermarkMatch(noisyPixels, 960, 540, templates)).toBeGreaterThanOrEqual(
+      legacyWatermarkDetectionThreshold,
+    );
   });
 
-  it("履歴上の半透明な旧透かしを50%へ縮小しても検出する", () => {
-    const pixels = renderHistoricalWatermark("#活動記録字幕ジェネレーター", 16, 5, 1075, 0.55);
-    const resizedPixels = shrinkImage(pixels, 1920, 1080, 2);
+  it("同じ位置と書式の異なる文字列を検出しない", () => {
+    const specification = legacyWatermarkSpecifications[2];
+    const pixels = renderImage(specification, "あいうえおかきくけこさしすせそ");
 
-    expect(detectLegacyWatermark(resizedPixels, 960, 540)).toBe(true);
+    expect(detectLegacyWatermark(pixels, canvasWidth, canvasHeight, templates)).toBe(false);
   });
 
-  it.each([
-    { height: 1080, scale: 1, width: 1920 },
-    { height: 540, scale: 0.5, width: 960 },
-    { height: 360, scale: 1 / 3, width: 640 },
-  ])("縮小率が$scaleでも左下の旧透かし形状を検出する", ({ width, height, scale }) => {
-    const pixels = createImage(width, height);
-    drawLegacyTextGeometry(pixels, width, height, scale);
+  it("同じ文字列でも位置が異なる場合は検出しない", () => {
+    const specification = legacyWatermarkSpecifications[2];
+    const pixels = renderImage(specification, specification.text, 12, -12);
 
-    expect(detectLegacyWatermark(pixels, width, height)).toBe(true);
+    expect(detectLegacyWatermark(pixels, canvasWidth, canvasHeight, templates)).toBe(false);
   });
 
-  it("左下に文字形状がない画像は検出しない", () => {
-    const width = 960;
-    const height = 540;
+  it("左下に細かな矩形が並ぶ画像を検出しない", () => {
+    const rectangles = Array.from(
+      { length: 18 },
+      (_, index) =>
+        `<rect x="${5 + index * 13}" y="1060" width="9" height="17" fill="${index % 2 === 0 ? "#e6e6e6" : "#121311"}"/>`,
+    ).join("");
+    const pixels = renderSvg(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}"><rect width="${canvasWidth}" height="${canvasHeight}" fill="#586a72"/>${rectangles}</svg>`,
+    );
 
-    expect(detectLegacyWatermark(createImage(width, height), width, height)).toBe(false);
+    expect(detectLegacyWatermark(pixels, canvasWidth, canvasHeight, templates)).toBe(false);
   });
 
-  it("同じ文字形状でも旧透かしの位置と異なる場合は検出しない", () => {
-    const width = 960;
-    const height = 540;
-    const pixels = createImage(width, height);
-    drawLegacyTextGeometry(pixels, width, height - 100, 0.5);
+  it("透かしがない画像を検出しない", () => {
+    const pixels = renderSvg(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}"><rect width="${canvasWidth}" height="${canvasHeight}" fill="#586a72"/></svg>`,
+    );
 
-    expect(detectLegacyWatermark(pixels, width, height)).toBe(false);
+    expect(detectLegacyWatermark(pixels, canvasWidth, canvasHeight, templates)).toBe(false);
+  });
+
+  it("透かしがない公開画像を検出しない", () => {
+    const imageBase64 = readFileSync("public/ogp_default.png").toString("base64");
+    const pixels = renderSvg(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasWidth}" height="${canvasHeight}"><image href="data:image/png;base64,${imageBase64}" width="${canvasWidth}" height="${canvasHeight}"/></svg>`,
+    );
+
+    expect(detectLegacyWatermark(pixels, canvasWidth, canvasHeight, templates)).toBe(false);
   });
 
   it("画素数が画像サイズと一致しない場合は検出しない", () => {
-    expect(detectLegacyWatermark(new Uint8ClampedArray(3), 1, 1)).toBe(false);
+    expect(detectLegacyWatermark(new Uint8ClampedArray(3), 1, 1, templates)).toBe(false);
   });
 });
