@@ -68,9 +68,16 @@ interface WatermarkVerifierReadyResponse {
   type: "verifierReady";
 }
 
+interface WatermarkVerifierProgressResponse {
+  progress: number;
+  requestId: number;
+  type: "verifierProgress";
+}
+
 export type ImageProcessorResponse =
   | ImageProcessorCompatibilityResponse
   | ImageProcessorFailureResponse
   | ImageRenderSuccessResponse
   | WatermarkVerificationSuccessResponse
+  | WatermarkVerifierProgressResponse
   | WatermarkVerifierReadyResponse;

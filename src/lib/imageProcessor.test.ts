@@ -28,6 +28,9 @@ class FakeImageProcessorWorker implements ImageProcessorWorker {
 
     if (message.type === "initializeVerifier") {
       this.listener?.({
+        data: { progress: 50, requestId: message.requestId, type: "verifierProgress" },
+      } as MessageEvent<unknown>);
+      this.listener?.({
         data: { requestId: message.requestId, type: "verifierReady" },
       } as MessageEvent<unknown>);
       return;
@@ -114,6 +117,15 @@ describe("createImageProcessor", () => {
     expect(firstPreload).toBe(secondPreload);
     await expect(firstPreload).resolves.toBeUndefined();
     expect(worker.messages).toEqual([{ requestId: 0, type: "initializeVerifier" }]);
+  });
+
+  it("検証モデルのダウンロード率を呼び出し元へ通知する", async () => {
+    const processor = createImageProcessor(new FakeImageProcessorWorker());
+    const progress: number[] = [];
+
+    await processor.preloadVerifier((value) => progress.push(value));
+
+    expect(progress).toEqual([50]);
   });
 
   it("生成結果をPNGのBlobに変換する", async () => {

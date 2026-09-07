@@ -7,6 +7,7 @@ import { type WatermarkVerificationResult, verifyWatermark } from "../../lib/wat
 
 const WatermarkVerifier = () => {
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [modelDownloadProgress, setModelDownloadProgress] = useState<number | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<WatermarkVerificationResult | null>(null);
@@ -15,7 +16,11 @@ const WatermarkVerifier = () => {
   useEffect(() => {
     let active = true;
 
-    void preloadWatermarkVerifier()
+    void preloadWatermarkVerifier((progress) => {
+      if (active) {
+        setModelDownloadProgress(progress);
+      }
+    })
       .catch((modelError: unknown) => {
         if (active) {
           setError(
@@ -98,8 +103,17 @@ const WatermarkVerifier = () => {
           </ImageSelectButton>
           {isModelLoading && (
             <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <CircularProgress size={24} aria-label="検証モデルを読み込み中" />
-              <Typography variant="body2">検証モデルを読み込んでいます。</Typography>
+              <CircularProgress
+                size={24}
+                aria-label="検証モデルを読み込み中"
+                variant={modelDownloadProgress === null ? "indeterminate" : "determinate"}
+                value={modelDownloadProgress ?? undefined}
+              />
+              <Typography variant="body2">
+                {modelDownloadProgress === null
+                  ? "検証モデルを読み込んでいます。"
+                  : `検証モデルを読み込んでいます。${modelDownloadProgress}%`}
+              </Typography>
             </Stack>
           )}
           {previewUrl && (

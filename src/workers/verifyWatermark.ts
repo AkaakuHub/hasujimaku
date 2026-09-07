@@ -10,11 +10,18 @@ import { initializeLegacyWatermarkDetector } from "./legacyWatermarkRuntime";
 
 const maxAnalysisEdge = 2048;
 
-export const initializeWatermarkVerifier = createCachedAsyncLoader(async () => {
-  const modelLoad = preloadTrustMarkDecoderModel();
+const loadWatermarkVerifier = createCachedAsyncLoader(async () => {
+  await preloadTrustMarkDecoderModel();
   void initializeTrustMarkDecoder().catch(() => undefined);
-  await modelLoad;
 });
+
+export const initializeWatermarkVerifier = async (
+  onProgress?: (progress: number) => void,
+): Promise<void> => {
+  const modelLoad = preloadTrustMarkDecoderModel(onProgress);
+  void loadWatermarkVerifier().catch(() => undefined);
+  await modelLoad;
+};
 
 export const verifyWatermark = async (image: Blob) => {
   const imageBitmap = await createImageBitmap(image);

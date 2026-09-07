@@ -28,7 +28,13 @@ self.addEventListener("message", (event: MessageEvent<ImageProcessorRequest>) =>
   }
 
   if (request.type === "initializeVerifier") {
-    void initializeWatermarkVerifier()
+    void initializeWatermarkVerifier((progress) => {
+      self.postMessage({
+        progress,
+        requestId: request.requestId,
+        type: "verifierProgress",
+      } satisfies ImageProcessorResponse);
+    })
       .then(() => {
         self.postMessage({
           requestId: request.requestId,

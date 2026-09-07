@@ -1,6 +1,7 @@
 import * as ort from "onnxruntime-web/wasm";
 
 import { createCachedAsyncLoader } from "./createCachedAsyncLoader";
+import { readDownload, type DownloadProgressListener } from "./readDownload";
 import {
   applyTrustMarkOutput,
   getTrustMarkDetection,
@@ -20,11 +21,23 @@ const modelUrls = {
 
 type ModelType = keyof typeof modelUrls;
 
+const downloadProgressListeners = {
+  decoder: new Set<DownloadProgressListener>(),
+  encoder: new Set<DownloadProgressListener>(),
+} satisfies Record<ModelType, Set<DownloadProgressListener>>;
+
+const reportDownloadProgress = (modelType: ModelType, progress: number): void => {
+  for (const listener of downloadProgressListeners[modelType]) {
+    listener(progress);
+  }
+};
+
 const fetchModel = async (modelType: ModelType): Promise<ArrayBuffer> => {
   const modelUrl = modelUrls[modelType];
   const cache = "caches" in globalThis ? await caches.open(modelCacheName) : null;
   const cachedResponse = await cache?.match(modelUrl);
   if (cachedResponse) {
+    reportDownloadProgress(modelType, 100);
     return cachedResponse.arrayBuffer();
   }
 
@@ -37,7 +50,11 @@ const fetchModel = async (modelType: ModelType): Promise<ArrayBuffer> => {
     void cache.put(modelUrl, response.clone()).catch(() => undefined);
   }
 
-  return response.arrayBuffer();
+  const listeners = downloadProgressListeners[modelType];
+  return readDownload(
+    response,
+    listeners.size > 0 ? (progress) => reportDownloadProgress(modelType, progress) : undefined,
+  );
 };
 
 const modelLoaders = {
@@ -89,9 +106,24 @@ const getFloatOutput = (
 export const initializeTrustMarkEncoder = (): Promise<ort.InferenceSession> =>
   getSession("encoder");
 
-export const preloadTrustMarkDecoderModel = createCachedAsyncLoader(async () => {
+const loadTrustMarkDecoderModel = createCachedAsyncLoader(async () => {
   await modelLoaders.decoder();
 });
+
+export const preloadTrustMarkDecoderModel = async (
+  onProgress?: DownloadProgressListener,
+): Promise<void> => {
+  if (onProgress) {
+    downloadProgressListeners.decoder.add(onProgress);
+  }
+  try {
+    await loadTrustMarkDecoderModel();
+  } finally {
+    if (onProgress) {
+      downloadProgressListeners.decoder.delete(onProgress);
+    }
+  }
+};
 
 export const initializeTrustMarkDecoder = async (): Promise<void> => {
   await getSession("decoder");
