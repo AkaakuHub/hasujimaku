@@ -49,9 +49,28 @@ describe("trustMark", () => {
     applyTrustMarkOutput(pixels, width, height, input, output);
 
     const centerPixelIndex = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
-    expect(pixels[centerPixelIndex]).toBe(230);
+    expect(pixels[centerPixelIndex]).toBe(242);
     expect(pixels.slice(0, 4)).toEqual(new Uint8ClampedArray([128, 128, 128, 255]));
     expect(pixels.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
+  });
+
+  it("モデル出力の行方向の偏りを抑えて反映する", () => {
+    const width = trustMarkEncoderSize;
+    const height = trustMarkEncoderSize;
+    const pixels = new Uint8ClampedArray(width * height * 4).fill(128);
+    const tensorLength = trustMarkEncoderSize * trustMarkEncoderSize * 3;
+    const input = new Float32Array(tensorLength);
+    const output = new Float32Array(tensorLength);
+    const centerRow = Math.floor(trustMarkEncoderSize / 2);
+
+    for (let x = 0; x < trustMarkEncoderSize; x += 1) {
+      output[centerRow * trustMarkEncoderSize + x] = 1;
+    }
+
+    applyTrustMarkOutput(pixels, width, height, input, output);
+
+    const centerPixelIndex = (centerRow * width + Math.floor(width / 2)) * 4;
+    expect(pixels[centerPixelIndex]).toBe(157);
   });
 
   it("100ビットの均等な固定署名を使用する", () => {

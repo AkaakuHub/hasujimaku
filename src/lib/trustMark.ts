@@ -26,7 +26,8 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 0.8;
+const watermarkStrength = 0.9;
+const rowBiasReduction = 0.75;
 
 const sampleChannel = (
   pixels: Uint8ClampedArray,
@@ -100,6 +101,17 @@ const sampleResidual = (residual: Float32Array, channel: number, x: number, y: n
   );
 };
 
+const sampleRowMean = (rowMeans: Float32Array, channel: number, y: number): number => {
+  const top = Math.max(0, Math.min(trustMarkEncoderSize - 1, Math.floor(y)));
+  const bottom = Math.min(top + 1, trustMarkEncoderSize - 1);
+  const vertical = y - Math.floor(y);
+  const channelOffset = channel * trustMarkEncoderSize;
+
+  return (
+    rowMeans[channelOffset + top] * (1 - vertical) + rowMeans[channelOffset + bottom] * vertical
+  );
+};
+
 export const applyTrustMarkOutput = (
   pixels: Uint8ClampedArray,
   width: number,
@@ -110,6 +122,7 @@ export const applyTrustMarkOutput = (
   const modelPixelCount = trustMarkEncoderSize * trustMarkEncoderSize;
   const residual = new Float32Array(output.length);
   const channelMeans = new Float32Array(3);
+  const rowMeans = new Float32Array(3 * trustMarkEncoderSize);
 
   for (let channel = 0; channel < 3; channel += 1) {
     const channelOffset = channel * modelPixelCount;
@@ -119,8 +132,13 @@ export const applyTrustMarkOutput = (
       const difference = Math.max(-1, Math.min(1, output[tensorIndex])) - input[tensorIndex];
       residual[tensorIndex] = difference;
       total += difference;
+      rowMeans[channel * trustMarkEncoderSize + Math.floor(index / trustMarkEncoderSize)] +=
+        difference;
     }
     channelMeans[channel] = total / modelPixelCount;
+    for (let row = 0; row < trustMarkEncoderSize; row += 1) {
+      rowMeans[channel * trustMarkEncoderSize + row] /= trustMarkEncoderSize;
+    }
   }
 
   const featherSize = Math.max(1, Math.min(50, Math.floor(Math.min(width, height) * 0.01)));
@@ -134,8 +152,11 @@ export const applyTrustMarkOutput = (
       const pixelIndex = (y * width + x) * 4;
 
       for (let channel = 0; channel < 3; channel += 1) {
+        const rowMean = sampleRowMean(rowMeans, channel, residualY);
+        const residualBias =
+          channelMeans[channel] + (rowMean - channelMeans[channel]) * rowBiasReduction;
         const adjustment =
-          (sampleResidual(residual, channel, residualX, residualY) - channelMeans[channel]) *
+          (sampleResidual(residual, channel, residualX, residualY) - residualBias) *
           watermarkStrength *
           127.5 *
           feather;
