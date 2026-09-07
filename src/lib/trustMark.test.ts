@@ -70,7 +70,7 @@ describe("trustMark", () => {
     applyTrustMarkOutput(pixels, width, height, input, output);
 
     const centerPixelIndex = (centerRow * width + Math.floor(width / 2)) * 4;
-    expect(pixels[centerPixelIndex]).toBe(157);
+    expect(pixels[centerPixelIndex]).toBe(128);
   });
 
   it("100ビットの均等な固定署名を使用する", () => {

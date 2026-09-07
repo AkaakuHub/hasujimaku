@@ -27,7 +27,6 @@ const createSignature = (): Float32Array => {
 export const trustMarkSignature = createSignature();
 
 const watermarkStrength = 0.9;
-const rowBiasReduction = 0.75;
 
 const sampleChannel = (
   pixels: Uint8ClampedArray,
@@ -121,21 +120,17 @@ export const applyTrustMarkOutput = (
 ): void => {
   const modelPixelCount = trustMarkEncoderSize * trustMarkEncoderSize;
   const residual = new Float32Array(output.length);
-  const channelMeans = new Float32Array(3);
   const rowMeans = new Float32Array(3 * trustMarkEncoderSize);
 
   for (let channel = 0; channel < 3; channel += 1) {
     const channelOffset = channel * modelPixelCount;
-    let total = 0;
     for (let index = 0; index < modelPixelCount; index += 1) {
       const tensorIndex = channelOffset + index;
       const difference = Math.max(-1, Math.min(1, output[tensorIndex])) - input[tensorIndex];
       residual[tensorIndex] = difference;
-      total += difference;
       rowMeans[channel * trustMarkEncoderSize + Math.floor(index / trustMarkEncoderSize)] +=
         difference;
     }
-    channelMeans[channel] = total / modelPixelCount;
     for (let row = 0; row < trustMarkEncoderSize; row += 1) {
       rowMeans[channel * trustMarkEncoderSize + row] /= trustMarkEncoderSize;
     }
@@ -152,11 +147,9 @@ export const applyTrustMarkOutput = (
       const pixelIndex = (y * width + x) * 4;
 
       for (let channel = 0; channel < 3; channel += 1) {
-        const rowMean = sampleRowMean(rowMeans, channel, residualY);
-        const residualBias =
-          channelMeans[channel] + (rowMean - channelMeans[channel]) * rowBiasReduction;
         const adjustment =
-          (sampleResidual(residual, channel, residualX, residualY) - residualBias) *
+          (sampleResidual(residual, channel, residualX, residualY) -
+            sampleRowMean(rowMeans, channel, residualY)) *
           watermarkStrength *
           127.5 *
           feather;
