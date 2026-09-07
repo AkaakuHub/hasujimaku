@@ -2,7 +2,7 @@ import { createTrustMarkResidual } from "./trustMarkResidual";
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
-const trustMarkDetectionThreshold = 0.67;
+const trustMarkDetectionThreshold = 0.66;
 const trustMarkPairDetectionThreshold = 0.82;
 
 export interface TrustMarkDetection {
@@ -12,7 +12,7 @@ export interface TrustMarkDetection {
 
 const createSignature = (): Float32Array => {
   const signature = new Float32Array(100);
-  let state = 0xcacb_2b13;
+  let state = 0x99c0_08a9;
 
   for (let index = 0; index < signature.length; index += 2) {
     state ^= state << 13;
@@ -74,11 +74,16 @@ export const applyTrustMarkOutput = (
       const pixelIndex = (y * width + x) * 4;
 
       for (let channel = 0; channel < 3; channel += 1) {
-        const adjustment =
-          samplePlane(residual, channel * modelPlaneSize, residualX, residualY) *
-          watermarkStrength *
-          127.5 *
-          feather;
+        const adjustment = Math.max(
+          -1,
+          Math.min(
+            1,
+            samplePlane(residual, channel * modelPlaneSize, residualX, residualY) *
+              watermarkStrength *
+              127.5 *
+              feather,
+          ),
+        );
         pixels[pixelIndex + channel] = clampByte(pixels[pixelIndex + channel] + adjustment);
       }
     }

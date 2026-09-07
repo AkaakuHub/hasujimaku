@@ -53,8 +53,7 @@ describe("trustMark", () => {
     applyTrustMarkOutput(pixels, width, height, input, output);
 
     const centerPixelIndex = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
-    expect(pixels[centerPixelIndex]).toBeGreaterThan(128);
-    expect(pixels[centerPixelIndex]).toBeLessThan(160);
+    expect(pixels[centerPixelIndex]).toBe(129);
     expect(pixels.slice(0, 4)).toEqual(new Uint8ClampedArray([128, 128, 128, 255]));
     expect(pixels.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
   });
@@ -83,11 +82,11 @@ describe("trustMark", () => {
     expect(trustMarkSignature.reduce((total, bit) => total + bit, 0)).toBe(50);
   });
 
-  it("署名の符号が67%以上一致した場合に検出する", () => {
-    expect(getTrustMarkDetection(createDecoderOutput(66)).detected).toBe(false);
-    expect(getTrustMarkDetection(createDecoderOutput(67))).toEqual({
+  it("署名の符号が66%以上一致した場合に検出する", () => {
+    expect(getTrustMarkDetection(createDecoderOutput(65)).detected).toBe(false);
+    expect(getTrustMarkDetection(createDecoderOutput(66))).toEqual({
       detected: true,
-      matchRate: 0.67,
+      matchRate: 0.66,
     });
   });
 
