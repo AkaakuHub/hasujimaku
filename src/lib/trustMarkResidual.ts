@@ -1,12 +1,15 @@
-const blurRadius = 2;
-const blurSigma = 0.7;
-const blurWeights = Float32Array.from({ length: blurRadius * 2 + 1 }, (_, index) =>
-  Math.exp(-((index - blurRadius) ** 2) / (2 * blurSigma ** 2)),
-);
-const weightTotal = blurWeights.reduce((total, weight) => total + weight, 0);
-for (let index = 0; index < blurWeights.length; index += 1) {
-  blurWeights[index] /= weightTotal;
-}
+const createBlurWeights = (radius: number, sigma: number): Float32Array => {
+  const weights = Float32Array.from({ length: radius * 2 + 1 }, (_, index) =>
+    Math.exp(-((index - radius) ** 2) / (2 * sigma ** 2)),
+  );
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  return weights.map((weight) => weight / total);
+};
+
+const horizontalBlurRadius = 2;
+const horizontalBlurWeights = createBlurWeights(horizontalBlurRadius, 0.7);
+const verticalBlurRadius = 8;
+const verticalBlurWeights = createBlurWeights(verticalBlurRadius, 3);
 
 export const createTrustMarkResidual = (
   input: Float32Array,
@@ -25,9 +28,9 @@ export const createTrustMarkResidual = (
       const rowOffset = channelOffset + y * size;
       for (let x = 0; x < size; x += 1) {
         let value = 0;
-        for (let tap = 0; tap < blurWeights.length; tap += 1) {
-          const sourceX = Math.max(0, Math.min(size - 1, x + tap - blurRadius));
-          value += difference[rowOffset + sourceX] * blurWeights[tap];
+        for (let tap = 0; tap < horizontalBlurWeights.length; tap += 1) {
+          const sourceX = Math.max(0, Math.min(size - 1, x + tap - horizontalBlurRadius));
+          value += difference[rowOffset + sourceX] * horizontalBlurWeights[tap];
         }
         horizontal[rowOffset + x] = value;
       }
@@ -38,9 +41,9 @@ export const createTrustMarkResidual = (
       let rowMean = 0;
       for (let x = 0; x < size; x += 1) {
         let value = 0;
-        for (let tap = 0; tap < blurWeights.length; tap += 1) {
-          const sourceY = Math.max(0, Math.min(size - 1, y + tap - blurRadius));
-          value += horizontal[channelOffset + sourceY * size + x] * blurWeights[tap];
+        for (let tap = 0; tap < verticalBlurWeights.length; tap += 1) {
+          const sourceY = Math.max(0, Math.min(size - 1, y + tap - verticalBlurRadius));
+          value += horizontal[channelOffset + sourceY * size + x] * verticalBlurWeights[tap];
         }
         residual[rowOffset + x] = value;
         rowMean += value;

@@ -40,7 +40,7 @@ describe("createTrustMarkResidual", () => {
     const smoothResidual = createTrustMarkResidual(input, smooth, size);
 
     expect(Math.abs(stripeResidual[size * 16 + 16])).toBeLessThan(0.02);
-    expect(smoothResidual[size * 8 + 8]).toBeGreaterThan(0.09);
+    expect(smoothResidual[size * 8 + 8]).toBeGreaterThan(0.08);
   });
 
   it("入力画像とモデル出力が同じ場合は画素を変えない", () => {

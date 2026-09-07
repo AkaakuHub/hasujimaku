@@ -1,10 +1,10 @@
 import { createTrustMarkResidual } from "./trustMarkResidual";
-import { createTrustMarkVisibilityMask } from "./trustMarkVisibilityMask";
+import { ditherByte } from "./ditherByte";
 
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
-const trustMarkDetectionThreshold = 0.75;
+const trustMarkDetectionThreshold = 0.68;
 const trustMarkPairDetectionThreshold = 0.82;
 
 export interface TrustMarkDetection {
@@ -30,9 +30,7 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 0.8;
-
-const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
+const watermarkStrength = 1.5;
 
 const samplePlane = (values: Float32Array, offset: number, x: number, y: number): number => {
   const size = trustMarkEncoderSize;
@@ -64,7 +62,6 @@ export const applyTrustMarkOutput = (
 ): void => {
   const modelPlaneSize = trustMarkEncoderSize * trustMarkEncoderSize;
   const residual = createTrustMarkResidual(input, output, trustMarkEncoderSize);
-  const visibilityMask = createTrustMarkVisibilityMask(input, trustMarkEncoderSize);
 
   const featherSize = Math.max(1, Math.min(50, Math.floor(Math.min(width, height) * 0.01)));
 
@@ -79,11 +76,15 @@ export const applyTrustMarkOutput = (
       for (let channel = 0; channel < 3; channel += 1) {
         const adjustment =
           samplePlane(residual, channel * modelPlaneSize, residualX, residualY) *
-          samplePlane(visibilityMask, 0, residualX, residualY) *
           watermarkStrength *
           127.5 *
           feather;
-        pixels[pixelIndex + channel] = clampByte(pixels[pixelIndex + channel] + adjustment);
+        pixels[pixelIndex + channel] = ditherByte(
+          pixels[pixelIndex + channel] + adjustment,
+          x,
+          y,
+          channel,
+        );
       }
     }
   }

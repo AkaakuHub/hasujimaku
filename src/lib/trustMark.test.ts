@@ -18,7 +18,7 @@ const createPairBiasedDecoderOutput = (matchingPairs: number): Float32Array => {
   for (let pair = 0; pair < trustMarkSignature.length / 2; pair += 1) {
     const firstIndex = pair * 2;
     const firstBit = trustMarkSignature[firstIndex];
-    if (pair < 32) {
+    if (pair < 20) {
       output[firstIndex] = firstBit === 1 ? 1 : -1;
       output[firstIndex + 1] = firstBit === 1 ? -1 : 1;
     } else if (pair < matchingPairs) {
@@ -83,11 +83,11 @@ describe("trustMark", () => {
     expect(trustMarkSignature.reduce((total, bit) => total + bit, 0)).toBe(50);
   });
 
-  it("署名の符号が75%以上一致した場合に検出する", () => {
-    expect(getTrustMarkDetection(createDecoderOutput(74)).detected).toBe(false);
-    expect(getTrustMarkDetection(createDecoderOutput(75))).toEqual({
+  it("署名の符号が68%以上一致した場合に検出する", () => {
+    expect(getTrustMarkDetection(createDecoderOutput(67)).detected).toBe(false);
+    expect(getTrustMarkDetection(createDecoderOutput(68))).toEqual({
       detected: true,
-      matchRate: 0.75,
+      matchRate: 0.68,
     });
   });
 
@@ -95,7 +95,7 @@ describe("trustMark", () => {
     expect(getTrustMarkDetection(createPairBiasedDecoderOutput(40)).detected).toBe(false);
     expect(getTrustMarkDetection(createPairBiasedDecoderOutput(41))).toEqual({
       detected: true,
-      matchRate: 0.73,
+      matchRate: 0.61,
     });
   });
 
