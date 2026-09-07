@@ -13,7 +13,7 @@ export interface TrustMarkDetection {
 
 const createSignature = (): Float32Array => {
   const signature = new Float32Array(100);
-  let state = 0x68a5_19d3;
+  let state = 0xcacb_2b13;
 
   for (let index = 0; index < signature.length; index += 2) {
     state ^= state << 13;
@@ -29,7 +29,7 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 0.9;
+const watermarkStrength = 0.7;
 
 const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 

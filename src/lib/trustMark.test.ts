@@ -33,7 +33,7 @@ const createPairBiasedDecoderOutput = (matchingPairs: number): Float32Array => {
 };
 
 describe("trustMark", () => {
-  it("モデル出力を画像全体のRGBだけに反映する", () => {
+  it("モデル出力を視覚影響を抑えて画像全体のRGBだけに反映する", () => {
     const width = trustMarkEncoderSize + 2;
     const height = trustMarkEncoderSize;
     const pixels = new Uint8ClampedArray(width * height * 4).fill(128);
@@ -54,7 +54,7 @@ describe("trustMark", () => {
 
     const centerPixelIndex = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
     expect(pixels[centerPixelIndex]).toBeGreaterThan(128);
-    expect(pixels[centerPixelIndex]).toBeLessThan(180);
+    expect(pixels[centerPixelIndex]).toBeLessThan(160);
     expect(pixels.slice(0, 4)).toEqual(new Uint8ClampedArray([128, 128, 128, 255]));
     expect(pixels.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
   });
