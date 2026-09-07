@@ -1,4 +1,5 @@
 import { createTrustMarkResidual } from "./trustMarkResidual";
+import { ditherByte } from "./ditherByte";
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
@@ -28,9 +29,7 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 1;
-
-const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
+const maximumAdjustment = 2.25;
 
 const samplePlane = (values: Float32Array, offset: number, x: number, y: number): number => {
   const size = trustMarkEncoderSize;
@@ -75,16 +74,18 @@ export const applyTrustMarkOutput = (
 
       for (let channel = 0; channel < 3; channel += 1) {
         const adjustment = Math.max(
-          -1,
+          -maximumAdjustment,
           Math.min(
-            1,
-            samplePlane(residual, channel * modelPlaneSize, residualX, residualY) *
-              watermarkStrength *
-              127.5 *
-              feather,
+            maximumAdjustment,
+            samplePlane(residual, channel * modelPlaneSize, residualX, residualY) * 127.5 * feather,
           ),
         );
-        pixels[pixelIndex + channel] = clampByte(pixels[pixelIndex + channel] + adjustment);
+        pixels[pixelIndex + channel] = ditherByte(
+          pixels[pixelIndex + channel] + adjustment,
+          x,
+          y,
+          channel,
+        );
       }
     }
   }

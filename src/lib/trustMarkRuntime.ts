@@ -134,20 +134,18 @@ export const embedTrustMark = async (
   width: number,
   height: number,
 ): Promise<void> => {
+  const input = createTrustMarkImageTensor(pixels, width, height, trustMarkEncoderSize);
   const session = await getSession("encoder");
-  for (let pass = 0; pass < 3; pass += 1) {
-    const input = createTrustMarkImageTensor(pixels, width, height, trustMarkEncoderSize);
-    const outputs = await session.run({
-      "onnx::Concat_0": new ort.Tensor("float32", input, [
-        1,
-        3,
-        trustMarkEncoderSize,
-        trustMarkEncoderSize,
-      ]),
-      "onnx::Gemm_1": new ort.Tensor("float32", trustMarkSignature, [1, trustMarkSignature.length]),
-    });
-    applyTrustMarkOutput(pixels, width, height, input, getFloatOutput(outputs, "image"));
-  }
+  const outputs = await session.run({
+    "onnx::Concat_0": new ort.Tensor("float32", input, [
+      1,
+      3,
+      trustMarkEncoderSize,
+      trustMarkEncoderSize,
+    ]),
+    "onnx::Gemm_1": new ort.Tensor("float32", trustMarkSignature, [1, trustMarkSignature.length]),
+  });
+  applyTrustMarkOutput(pixels, width, height, input, getFloatOutput(outputs, "image"));
 };
 
 export const detectTrustMark = async (
