@@ -26,7 +26,7 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 1.5;
+const watermarkStrength = 0.8;
 
 const sampleChannel = (
   pixels: Uint8ClampedArray,
