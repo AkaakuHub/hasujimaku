@@ -1,10 +1,8 @@
 import { createTrustMarkResidual } from "./trustMarkResidual";
-import { ditherByte } from "./ditherByte";
-
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
-const trustMarkDetectionThreshold = 0.68;
+const trustMarkDetectionThreshold = 0.67;
 const trustMarkPairDetectionThreshold = 0.82;
 
 export interface TrustMarkDetection {
@@ -30,7 +28,9 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 1.5;
+const watermarkStrength = 1;
+
+const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 
 const samplePlane = (values: Float32Array, offset: number, x: number, y: number): number => {
   const size = trustMarkEncoderSize;
@@ -79,12 +79,7 @@ export const applyTrustMarkOutput = (
           watermarkStrength *
           127.5 *
           feather;
-        pixels[pixelIndex + channel] = ditherByte(
-          pixels[pixelIndex + channel] + adjustment,
-          x,
-          y,
-          channel,
-        );
+        pixels[pixelIndex + channel] = clampByte(pixels[pixelIndex + channel] + adjustment);
       }
     }
   }

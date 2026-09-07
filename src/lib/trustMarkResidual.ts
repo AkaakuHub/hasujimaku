@@ -8,8 +8,8 @@ const createBlurWeights = (radius: number, sigma: number): Float32Array => {
 
 const horizontalBlurRadius = 2;
 const horizontalBlurWeights = createBlurWeights(horizontalBlurRadius, 0.7);
-const verticalBlurRadius = 8;
-const verticalBlurWeights = createBlurWeights(verticalBlurRadius, 3);
+const verticalBlurRadius = 9;
+const verticalBlurWeights = createBlurWeights(verticalBlurRadius, 3.2);
 
 export const createTrustMarkResidual = (
   input: Float32Array,

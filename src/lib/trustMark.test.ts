@@ -83,11 +83,11 @@ describe("trustMark", () => {
     expect(trustMarkSignature.reduce((total, bit) => total + bit, 0)).toBe(50);
   });
 
-  it("署名の符号が68%以上一致した場合に検出する", () => {
-    expect(getTrustMarkDetection(createDecoderOutput(67)).detected).toBe(false);
-    expect(getTrustMarkDetection(createDecoderOutput(68))).toEqual({
+  it("署名の符号が67%以上一致した場合に検出する", () => {
+    expect(getTrustMarkDetection(createDecoderOutput(66)).detected).toBe(false);
+    expect(getTrustMarkDetection(createDecoderOutput(67))).toEqual({
       detected: true,
-      matchRate: 0.68,
+      matchRate: 0.67,
     });
   });
 
