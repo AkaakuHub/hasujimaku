@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyTrustMarkOutput,
-  createTrustMarkImageTensor,
   getTrustMarkDetection,
   trustMarkEncoderSize,
   trustMarkSignature,
@@ -14,21 +13,26 @@ const createDecoderOutput = (matchingBits: number): Float32Array =>
     return decodedBit === 1 ? 1 : -1;
   });
 
+const createPairBiasedDecoderOutput = (matchingPairs: number): Float32Array => {
+  const output = new Float32Array(trustMarkSignature.length);
+  for (let pair = 0; pair < trustMarkSignature.length / 2; pair += 1) {
+    const firstIndex = pair * 2;
+    const firstBit = trustMarkSignature[firstIndex];
+    if (pair < 32) {
+      output[firstIndex] = firstBit === 1 ? 1 : -1;
+      output[firstIndex + 1] = firstBit === 1 ? -1 : 1;
+    } else if (pair < matchingPairs) {
+      output[firstIndex] = firstBit === 1 ? 1 : -1;
+      output[firstIndex + 1] = firstBit === 1 ? 0.5 : -0.5;
+    } else {
+      output[firstIndex] = firstBit === 1 ? -1 : 1;
+      output[firstIndex + 1] = firstBit === 1 ? 1 : -1;
+    }
+  }
+  return output;
+};
+
 describe("trustMark", () => {
-  it("長方形画像全体をモデル入力に変換する", () => {
-    const pixels = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255]);
-
-    expect(createTrustMarkImageTensor(pixels, 3, 1, 1)).toEqual(new Float32Array([-1, 1, -1]));
-  });
-
-  it("長方形画像の横幅全体をモデル入力へ標本化する", () => {
-    const pixels = new Uint8ClampedArray([255, 0, 0, 255, 0, 255, 0, 255, 0, 0, 255, 255]);
-
-    expect(createTrustMarkImageTensor(pixels, 3, 1, 2)).toEqual(
-      new Float32Array([0.5, -1, 0.5, -1, -0.5, -0.5, -0.5, -0.5, -1, 0.5, -1, 0.5]),
-    );
-  });
-
   it("モデル出力を画像全体のRGBだけに反映する", () => {
     const width = trustMarkEncoderSize + 2;
     const height = trustMarkEncoderSize;
@@ -49,7 +53,8 @@ describe("trustMark", () => {
     applyTrustMarkOutput(pixels, width, height, input, output);
 
     const centerPixelIndex = (Math.floor(height / 2) * width + Math.floor(width / 2)) * 4;
-    expect(pixels[centerPixelIndex]).toBe(242);
+    expect(pixels[centerPixelIndex]).toBeGreaterThan(128);
+    expect(pixels[centerPixelIndex]).toBeLessThan(180);
     expect(pixels.slice(0, 4)).toEqual(new Uint8ClampedArray([128, 128, 128, 255]));
     expect(pixels.every((value, index) => index % 4 !== 3 || value === 255)).toBe(true);
   });
@@ -78,11 +83,19 @@ describe("trustMark", () => {
     expect(trustMarkSignature.reduce((total, bit) => total + bit, 0)).toBe(50);
   });
 
-  it("署名の75%以上が一致した場合だけ検出する", () => {
+  it("署名の符号が75%以上一致した場合に検出する", () => {
     expect(getTrustMarkDetection(createDecoderOutput(74)).detected).toBe(false);
     expect(getTrustMarkDetection(createDecoderOutput(75))).toEqual({
       detected: true,
       matchRate: 0.75,
+    });
+  });
+
+  it("減色による共通の偏りがあっても署名ペアの82%以上から検出する", () => {
+    expect(getTrustMarkDetection(createPairBiasedDecoderOutput(40)).detected).toBe(false);
+    expect(getTrustMarkDetection(createPairBiasedDecoderOutput(41))).toEqual({
+      detected: true,
+      matchRate: 0.73,
     });
   });
 

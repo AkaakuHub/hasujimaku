@@ -3,13 +3,13 @@ import * as ort from "onnxruntime-web/wasm";
 import { createCachedAsyncLoader } from "./createCachedAsyncLoader";
 import {
   applyTrustMarkOutput,
-  createTrustMarkImageTensor,
   getTrustMarkDetection,
   trustMarkDecoderSize,
   trustMarkEncoderSize,
   trustMarkSignature,
   type TrustMarkDetection,
 } from "./trustMark";
+import { createTrustMarkImageTensor } from "./trustMarkImageTensor";
 
 const modelBaseUrl = "https://cai-watermark.adobe.net/watermarking/trustmark-models";
 const modelCacheName = "trustmark-q-models-v1";

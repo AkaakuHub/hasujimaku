@@ -1,7 +1,10 @@
+import { createTrustMarkResidual } from "./trustMarkResidual";
+
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
 
 const trustMarkDetectionThreshold = 0.75;
+const trustMarkPairDetectionThreshold = 0.82;
 
 export interface TrustMarkDetection {
   detected: boolean;
@@ -28,66 +31,18 @@ export const trustMarkSignature = createSignature();
 
 const watermarkStrength = 0.9;
 
-const sampleChannel = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  x: number,
-  y: number,
-  channel: number,
-): number => {
-  const left = Math.max(0, Math.min(width - 1, Math.floor(x)));
-  const top = Math.max(0, Math.min(height - 1, Math.floor(y)));
-  const right = Math.min(left + 1, width - 1);
-  const bottom = Math.min(top + 1, height - 1);
-  const horizontal = x - Math.floor(x);
-  const vertical = y - Math.floor(y);
-  const topLeft = pixels[(top * width + left) * 4 + channel];
-  const topRight = pixels[(top * width + right) * 4 + channel];
-  const bottomLeft = pixels[(bottom * width + left) * 4 + channel];
-  const bottomRight = pixels[(bottom * width + right) * 4 + channel];
-
-  return (
-    (topLeft * (1 - horizontal) + topRight * horizontal) * (1 - vertical) +
-    (bottomLeft * (1 - horizontal) + bottomRight * horizontal) * vertical
-  );
-};
-
-export const createTrustMarkImageTensor = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  targetSize: number,
-): Float32Array => {
-  const channelSize = targetSize * targetSize;
-  const tensor = new Float32Array(channelSize * 3);
-
-  for (let y = 0; y < targetSize; y += 1) {
-    const sourceY = ((y + 0.5) * height) / targetSize - 0.5;
-    for (let x = 0; x < targetSize; x += 1) {
-      const sourceX = ((x + 0.5) * width) / targetSize - 0.5;
-      const tensorIndex = y * targetSize + x;
-      tensor[tensorIndex] = sampleChannel(pixels, width, height, sourceX, sourceY, 0) / 127.5 - 1;
-      tensor[channelSize + tensorIndex] =
-        sampleChannel(pixels, width, height, sourceX, sourceY, 1) / 127.5 - 1;
-      tensor[channelSize * 2 + tensorIndex] =
-        sampleChannel(pixels, width, height, sourceX, sourceY, 2) / 127.5 - 1;
-    }
-  }
-
-  return tensor;
-};
-
 const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 
 const sampleResidual = (residual: Float32Array, channel: number, x: number, y: number): number => {
   const size = trustMarkEncoderSize;
-  const left = Math.max(0, Math.min(size - 1, Math.floor(x)));
-  const top = Math.max(0, Math.min(size - 1, Math.floor(y)));
+  const sourceX = Math.max(0, Math.min(size - 1, x));
+  const sourceY = Math.max(0, Math.min(size - 1, y));
+  const left = Math.floor(sourceX);
+  const top = Math.floor(sourceY);
   const right = Math.min(left + 1, size - 1);
   const bottom = Math.min(top + 1, size - 1);
-  const horizontal = x - Math.floor(x);
-  const vertical = y - Math.floor(y);
+  const horizontal = sourceX - left;
+  const vertical = sourceY - top;
   const channelOffset = channel * size * size;
 
   return (
@@ -100,17 +55,6 @@ const sampleResidual = (residual: Float32Array, channel: number, x: number, y: n
   );
 };
 
-const sampleRowMean = (rowMeans: Float32Array, channel: number, y: number): number => {
-  const top = Math.max(0, Math.min(trustMarkEncoderSize - 1, Math.floor(y)));
-  const bottom = Math.min(top + 1, trustMarkEncoderSize - 1);
-  const vertical = y - Math.floor(y);
-  const channelOffset = channel * trustMarkEncoderSize;
-
-  return (
-    rowMeans[channelOffset + top] * (1 - vertical) + rowMeans[channelOffset + bottom] * vertical
-  );
-};
-
 export const applyTrustMarkOutput = (
   pixels: Uint8ClampedArray,
   width: number,
@@ -118,23 +62,7 @@ export const applyTrustMarkOutput = (
   input: Float32Array,
   output: Float32Array,
 ): void => {
-  const modelPixelCount = trustMarkEncoderSize * trustMarkEncoderSize;
-  const residual = new Float32Array(output.length);
-  const rowMeans = new Float32Array(3 * trustMarkEncoderSize);
-
-  for (let channel = 0; channel < 3; channel += 1) {
-    const channelOffset = channel * modelPixelCount;
-    for (let index = 0; index < modelPixelCount; index += 1) {
-      const tensorIndex = channelOffset + index;
-      const difference = Math.max(-1, Math.min(1, output[tensorIndex])) - input[tensorIndex];
-      residual[tensorIndex] = difference;
-      rowMeans[channel * trustMarkEncoderSize + Math.floor(index / trustMarkEncoderSize)] +=
-        difference;
-    }
-    for (let row = 0; row < trustMarkEncoderSize; row += 1) {
-      rowMeans[channel * trustMarkEncoderSize + row] /= trustMarkEncoderSize;
-    }
-  }
+  const residual = createTrustMarkResidual(input, output, trustMarkEncoderSize);
 
   const featherSize = Math.max(1, Math.min(50, Math.floor(Math.min(width, height) * 0.01)));
 
@@ -148,8 +76,7 @@ export const applyTrustMarkOutput = (
 
       for (let channel = 0; channel < 3; channel += 1) {
         const adjustment =
-          (sampleResidual(residual, channel, residualX, residualY) -
-            sampleRowMean(rowMeans, channel, residualY)) *
+          sampleResidual(residual, channel, residualX, residualY) *
           watermarkStrength *
           127.5 *
           feather;
@@ -165,11 +92,21 @@ export const getTrustMarkDetection = (decoderOutput: Float32Array): TrustMarkDet
   }
 
   let matchingBits = 0;
+  let matchingPairs = 0;
   for (let index = 0; index < decoderOutput.length; index += 1) {
     const decodedBit = Number(decoderOutput[index] >= 0);
     matchingBits += Number(decodedBit === trustMarkSignature[index]);
   }
+  for (let index = 0; index < decoderOutput.length; index += 2) {
+    const decodedFirstBit = Number(decoderOutput[index] >= decoderOutput[index + 1]);
+    matchingPairs += Number(decodedFirstBit === trustMarkSignature[index]);
+  }
 
   const matchRate = matchingBits / trustMarkSignature.length;
-  return { detected: matchRate >= trustMarkDetectionThreshold, matchRate };
+  const pairMatchRate = matchingPairs / (trustMarkSignature.length / 2);
+  return {
+    detected:
+      matchRate >= trustMarkDetectionThreshold || pairMatchRate >= trustMarkPairDetectionThreshold,
+    matchRate,
+  };
 };
