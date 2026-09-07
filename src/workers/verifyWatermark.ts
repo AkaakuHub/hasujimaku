@@ -1,5 +1,6 @@
 import { createCachedAsyncLoader } from "../lib/createCachedAsyncLoader";
 import { detectLegacyWatermark } from "../lib/legacyWatermark";
+import { detectWatermarkWithLegacyFallback } from "../lib/watermarkDetection";
 import {
   detectTrustMark,
   initializeTrustMarkDecoder,
@@ -12,7 +13,7 @@ const maxAnalysisEdge = 2048;
 export const initializeWatermarkVerifier = createCachedAsyncLoader(async () => {
   const modelLoad = preloadTrustMarkDecoderModel();
   void initializeTrustMarkDecoder().catch(() => undefined);
-  await Promise.all([modelLoad, initializeLegacyWatermarkDetector()]);
+  await modelLoad;
 });
 
 export const verifyWatermark = async (image: Blob) => {
@@ -29,11 +30,13 @@ export const verifyWatermark = async (image: Blob) => {
 
     context.drawImage(imageBitmap, 0, 0, width, height);
     const pixels = context.getImageData(0, 0, width, height).data;
-    const legacyWatermarkTemplates = await initializeLegacyWatermarkDetector();
-    if (detectLegacyWatermark(pixels, width, height, legacyWatermarkTemplates)) {
-      return { detected: true, matchRate: 0 };
-    }
-    return detectTrustMark(pixels, width, height);
+    return detectWatermarkWithLegacyFallback(
+      () => detectTrustMark(pixels, width, height),
+      async () => {
+        const legacyWatermarkTemplates = await initializeLegacyWatermarkDetector();
+        return detectLegacyWatermark(pixels, width, height, legacyWatermarkTemplates);
+      },
+    );
   } finally {
     imageBitmap.close();
   }
