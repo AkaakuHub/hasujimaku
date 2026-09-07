@@ -17,6 +17,7 @@ export const createTrustMarkResidual = (
   const difference = output.map((value, index) => Math.max(-1, Math.min(1, value)) - input[index]);
   const horizontal = new Float32Array(difference.length);
   const residual = new Float32Array(difference.length);
+  const columnMeans = new Float32Array(size);
 
   for (let channel = 0; channel < 3; channel += 1) {
     const channelOffset = channel * channelSize;
@@ -47,8 +48,16 @@ export const createTrustMarkResidual = (
       rowMean /= size;
       for (let x = 0; x < size; x += 1) {
         residual[rowOffset + x] -= rowMean;
+        columnMeans[x] += residual[rowOffset + x];
       }
     }
+    for (let x = 0; x < size; x += 1) {
+      columnMeans[x] /= size;
+      for (let y = 0; y < size; y += 1) {
+        residual[channelOffset + y * size + x] -= columnMeans[x];
+      }
+    }
+    columnMeans.fill(0);
   }
   return residual;
 };

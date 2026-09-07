@@ -1,4 +1,5 @@
 import { createTrustMarkResidual } from "./trustMarkResidual";
+import { createTrustMarkVisibilityMask } from "./trustMarkVisibilityMask";
 
 export const trustMarkEncoderSize = 256;
 export const trustMarkDecoderSize = 256;
@@ -29,11 +30,11 @@ const createSignature = (): Float32Array => {
 
 export const trustMarkSignature = createSignature();
 
-const watermarkStrength = 0.7;
+const watermarkStrength = 0.8;
 
 const clampByte = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 
-const sampleResidual = (residual: Float32Array, channel: number, x: number, y: number): number => {
+const samplePlane = (values: Float32Array, offset: number, x: number, y: number): number => {
   const size = trustMarkEncoderSize;
   const sourceX = Math.max(0, Math.min(size - 1, x));
   const sourceY = Math.max(0, Math.min(size - 1, y));
@@ -43,14 +44,13 @@ const sampleResidual = (residual: Float32Array, channel: number, x: number, y: n
   const bottom = Math.min(top + 1, size - 1);
   const horizontal = sourceX - left;
   const vertical = sourceY - top;
-  const channelOffset = channel * size * size;
 
   return (
-    (residual[channelOffset + top * size + left] * (1 - horizontal) +
-      residual[channelOffset + top * size + right] * horizontal) *
+    (values[offset + top * size + left] * (1 - horizontal) +
+      values[offset + top * size + right] * horizontal) *
       (1 - vertical) +
-    (residual[channelOffset + bottom * size + left] * (1 - horizontal) +
-      residual[channelOffset + bottom * size + right] * horizontal) *
+    (values[offset + bottom * size + left] * (1 - horizontal) +
+      values[offset + bottom * size + right] * horizontal) *
       vertical
   );
 };
@@ -62,7 +62,9 @@ export const applyTrustMarkOutput = (
   input: Float32Array,
   output: Float32Array,
 ): void => {
+  const modelPlaneSize = trustMarkEncoderSize * trustMarkEncoderSize;
   const residual = createTrustMarkResidual(input, output, trustMarkEncoderSize);
+  const visibilityMask = createTrustMarkVisibilityMask(input, trustMarkEncoderSize);
 
   const featherSize = Math.max(1, Math.min(50, Math.floor(Math.min(width, height) * 0.01)));
 
@@ -76,7 +78,8 @@ export const applyTrustMarkOutput = (
 
       for (let channel = 0; channel < 3; channel += 1) {
         const adjustment =
-          sampleResidual(residual, channel, residualX, residualY) *
+          samplePlane(residual, channel * modelPlaneSize, residualX, residualY) *
+          samplePlane(visibilityMask, 0, residualX, residualY) *
           watermarkStrength *
           127.5 *
           feather;
