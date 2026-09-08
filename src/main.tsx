@@ -4,7 +4,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 
 import Page from "./app/(index)/page";
-import { startBuildUpdateMonitor } from "./lib/buildUpdateMonitor";
+import { startBuildUpdateMonitor } from "./lib/browserBuildUpdateMonitor";
 import { theme } from "./lib/theme";
 
 if (import.meta.env.PROD) {

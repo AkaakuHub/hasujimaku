@@ -1,33 +1,96 @@
-const checkIntervalMilliseconds = 60_000;
+const checkIntervalMilliseconds = 5 * 60_000;
 
-interface BuildVersion {
-  buildId: string;
+interface BuildUpdateMonitorOptions {
+  currentBuildId: string;
+  fetchBuildId: () => Promise<string>;
+  isVisible: () => boolean;
+  reload: () => void;
+  setTimer: (callback: () => void, delay: number) => number;
+  clearTimer: (timer: number) => void;
 }
 
-const fetchCurrentBuildId = async (): Promise<string> => {
-  const response = await fetch(`/version.json?checkedAt=${Date.now()}`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("配信バージョンを確認できませんでした。");
-  }
-  const version: BuildVersion = await response.json();
-  return version.buildId;
-};
+interface BuildUpdateMonitor {
+  checkNow: () => Promise<void>;
+  handleOnline: () => void;
+  handleVisibilityChange: () => void;
+  start: () => void;
+  stop: () => void;
+}
 
-const reloadWhenBuildChanges = async (): Promise<void> => {
-  if ((await fetchCurrentBuildId()) !== __BUILD_ID__) {
-    window.location.reload();
-  }
-};
+export const createBuildUpdateMonitor = ({
+  currentBuildId,
+  fetchBuildId,
+  isVisible,
+  reload,
+  setTimer,
+  clearTimer,
+}: BuildUpdateMonitorOptions): BuildUpdateMonitor => {
+  let scheduledCheck: number | undefined;
+  let currentCheck: Promise<void> | undefined;
+  let stopped = false;
+  let updateDetected = false;
 
-export const startBuildUpdateMonitor = (): void => {
-  const checkForUpdate = (): void => {
-    void reloadWhenBuildChanges().catch(() => undefined);
+  const cancelScheduledCheck = (): void => {
+    if (scheduledCheck !== undefined) {
+      clearTimer(scheduledCheck);
+      scheduledCheck = undefined;
+    }
   };
 
-  window.setInterval(checkForUpdate, checkIntervalMilliseconds);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      checkForUpdate();
+  const scheduleNextCheck = (): void => {
+    cancelScheduledCheck();
+    if (stopped || updateDetected || !isVisible()) {
+      return;
     }
-  });
+    scheduledCheck = setTimer(() => {
+      scheduledCheck = undefined;
+      void checkNow();
+    }, checkIntervalMilliseconds);
+  };
+
+  const checkNow = (): Promise<void> => {
+    if (stopped || updateDetected || !isVisible()) {
+      scheduleNextCheck();
+      return Promise.resolve();
+    }
+    if (currentCheck) {
+      return currentCheck;
+    }
+
+    currentCheck = fetchBuildId()
+      .then((buildId) => {
+        if (buildId !== currentBuildId) {
+          updateDetected = true;
+          cancelScheduledCheck();
+          reload();
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        currentCheck = undefined;
+        scheduleNextCheck();
+      });
+    return currentCheck;
+  };
+
+  return {
+    checkNow,
+    handleOnline: () => {
+      void checkNow();
+    },
+    handleVisibilityChange: () => {
+      if (isVisible()) {
+        void checkNow();
+      } else {
+        cancelScheduledCheck();
+      }
+    },
+    start: () => {
+      void checkNow();
+    },
+    stop: () => {
+      stopped = true;
+      cancelScheduledCheck();
+    },
+  };
 };
