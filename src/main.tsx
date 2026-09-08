@@ -4,7 +4,12 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
 
 import Page from "./app/(index)/page";
+import { startBuildUpdateMonitor } from "./lib/buildUpdateMonitor";
 import { theme } from "./lib/theme";
+
+if (import.meta.env.PROD) {
+  startBuildUpdateMonitor();
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
