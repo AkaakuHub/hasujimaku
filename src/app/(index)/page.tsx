@@ -22,11 +22,7 @@ import Header from "../../components/header/header";
 import ImageCanvas from "../../components/imageCanvas/ImageCanvas";
 import ImageDetailsForm, { type ImageDetails } from "../../components/imageCanvas/ImageDetailsForm";
 import LazyLoadBoundary from "../../components/LazyLoadBoundary";
-import {
-  checkImageProcessorCompatibility,
-  preloadImageRenderer,
-  preloadWatermarkVerifier,
-} from "../../lib/imageProcessor";
+import { checkImageProcessorCompatibility, preloadImageRenderer } from "../../lib/imageProcessor";
 import { shareText } from "../../lib/shareText";
 import { shareImage } from "../../lib/shareImage";
 import { themes } from "../../lib/themes";
@@ -113,9 +109,6 @@ export default function Page() {
             <Tabs
               value={selectedTab}
               onChange={(_, value: number) => {
-                if (value === 1) {
-                  void preloadWatermarkVerifier().catch(() => undefined);
-                }
                 setSelectedTab(value);
               }}
               variant="fullWidth"

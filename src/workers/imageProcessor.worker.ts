@@ -3,7 +3,7 @@
 import type { ImageProcessorRequest, ImageProcessorResponse } from "../lib/imageProcessorMessages";
 import { detectUnsupportedImageProcessorFeatures } from "../lib/browserCompatibility";
 import { initializeImageRenderer, renderImage } from "./renderImage";
-import { initializeWatermarkVerifier, verifyWatermark } from "./verifyWatermark";
+import { verifyWatermark } from "./verifyWatermark";
 
 const postFailure = (requestId: number, error: unknown, fallbackMessage: string): void => {
   const message = error instanceof Error ? error.message : fallbackMessage;
@@ -24,26 +24,6 @@ self.addEventListener("message", (event: MessageEvent<ImageProcessorRequest>) =>
 
   if (request.type === "initializeRenderer") {
     void initializeImageRenderer().catch(() => undefined);
-    return;
-  }
-
-  if (request.type === "initializeVerifier") {
-    void initializeWatermarkVerifier((progress) => {
-      self.postMessage({
-        progress,
-        requestId: request.requestId,
-        type: "verifierProgress",
-      } satisfies ImageProcessorResponse);
-    })
-      .then(() => {
-        self.postMessage({
-          requestId: request.requestId,
-          type: "verifierReady",
-        } satisfies ImageProcessorResponse);
-      })
-      .catch((error: unknown) => {
-        postFailure(request.requestId, error, "透かしモデルを読み込めませんでした。");
-      });
     return;
   }
 

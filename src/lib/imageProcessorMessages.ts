@@ -1,4 +1,4 @@
-import type { TrustMarkDetection } from "./trustMark";
+import type { WatermarkDetection } from "./imageWatermark";
 
 export interface ImageRenderInput {
   baseImageBase64: string;
@@ -13,11 +13,6 @@ interface CheckCompatibilityRequest {
 
 interface InitializeImageRendererRequest {
   type: "initializeRenderer";
-}
-
-interface InitializeWatermarkVerifierRequest {
-  requestId: number;
-  type: "initializeVerifier";
 }
 
 interface RenderImageRequest {
@@ -35,7 +30,6 @@ interface VerifyWatermarkRequest {
 export type ImageProcessorRequest =
   | CheckCompatibilityRequest
   | InitializeImageRendererRequest
-  | InitializeWatermarkVerifierRequest
   | RenderImageRequest
   | VerifyWatermarkRequest;
 
@@ -58,26 +52,13 @@ interface ImageRenderSuccessResponse {
 }
 
 interface WatermarkVerificationSuccessResponse {
-  detection: TrustMarkDetection;
+  detection: WatermarkDetection;
   requestId: number;
   type: "verificationSuccess";
-}
-
-interface WatermarkVerifierReadyResponse {
-  requestId: number;
-  type: "verifierReady";
-}
-
-interface WatermarkVerifierProgressResponse {
-  progress: number;
-  requestId: number;
-  type: "verifierProgress";
 }
 
 export type ImageProcessorResponse =
   | ImageProcessorCompatibilityResponse
   | ImageProcessorFailureResponse
   | ImageRenderSuccessResponse
-  | WatermarkVerificationSuccessResponse
-  | WatermarkVerifierProgressResponse
-  | WatermarkVerifierReadyResponse;
+  | WatermarkVerificationSuccessResponse;

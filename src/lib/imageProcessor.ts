@@ -4,7 +4,7 @@ import type {
   ImageProcessorResponse,
   ImageRenderInput,
 } from "./imageProcessorMessages";
-import type { TrustMarkDetection } from "./trustMark";
+import type { WatermarkDetection } from "./imageWatermark";
 
 interface PendingRequest {
   reject: (reason: Error) => void;
@@ -19,9 +19,8 @@ export interface ImageProcessorWorker {
 export interface ImageProcessor {
   checkCompatibility: () => Promise<string[]>;
   preloadRenderer: () => void;
-  preloadVerifier: (onProgress?: (progress: number) => void) => Promise<void>;
   renderImage: (input: ImageRenderInput) => Promise<Blob>;
-  verifyWatermark: (image: Blob) => Promise<TrustMarkDetection>;
+  verifyWatermark: (image: Blob) => Promise<WatermarkDetection>;
 }
 
 const isImageProcessorResponse = (value: unknown): value is ImageProcessorResponse => {
@@ -38,9 +37,7 @@ const isImageProcessorResponse = (value: unknown): value is ImageProcessorRespon
     value.type === "failure" ||
     value.type === "compatibility" ||
     value.type === "renderSuccess" ||
-    value.type === "verificationSuccess" ||
-    value.type === "verifierProgress" ||
-    value.type === "verifierReady"
+    value.type === "verificationSuccess"
   );
 };
 
@@ -50,17 +47,13 @@ export const createImageProcessor = (worker: ImageProcessorWorker): ImageProcess
   const pendingRequests = new Map<number, PendingRequest>();
   const pendingCompatibilityChecks = new Map<number, (unsupportedFeatures: string[]) => void>();
   const pendingRenders = new Map<number, (blob: Blob) => void>();
-  const pendingVerifications = new Map<number, (detection: TrustMarkDetection) => void>();
-  const pendingVerifierPreloads = new Map<number, () => void>();
-  const verifierProgressListeners = new Set<(progress: number) => void>();
-  let verifierProgress: number | undefined;
+  const pendingVerifications = new Map<number, (detection: WatermarkDetection) => void>();
 
   const clearPendingRequest = (requestId: number): void => {
     pendingRequests.delete(requestId);
     pendingCompatibilityChecks.delete(requestId);
     pendingRenders.delete(requestId);
     pendingVerifications.delete(requestId);
-    pendingVerifierPreloads.delete(requestId);
   };
 
   worker.onerror = () => {
@@ -72,7 +65,6 @@ export const createImageProcessor = (worker: ImageProcessorWorker): ImageProcess
     pendingCompatibilityChecks.clear();
     pendingRenders.clear();
     pendingVerifications.clear();
-    pendingVerifierPreloads.clear();
   };
 
   worker.addEventListener("message", (event) => {
@@ -117,20 +109,6 @@ export const createImageProcessor = (worker: ImageProcessorWorker): ImageProcess
       }
       return;
     }
-
-    if (event.data.type === "verifierProgress") {
-      verifierProgress = event.data.progress;
-      for (const listener of verifierProgressListeners) {
-        listener(verifierProgress);
-      }
-      return;
-    }
-
-    const resolve = pendingVerifierPreloads.get(event.data.requestId);
-    if (resolve) {
-      clearPendingRequest(event.data.requestId);
-      resolve();
-    }
   });
 
   const startRequest = <Result>(
@@ -147,23 +125,6 @@ export const createImageProcessor = (worker: ImageProcessorWorker): ImageProcess
     });
   };
 
-  const loadVerifier = createCachedAsyncLoader(() =>
-    startRequest<void>(
-      (requestId) => ({ requestId, type: "initializeVerifier" }),
-      pendingVerifierPreloads,
-    ),
-  );
-  const preloadVerifier = (onProgress?: (progress: number) => void): Promise<void> => {
-    const verifierLoad = loadVerifier();
-    if (!onProgress) {
-      return verifierLoad;
-    }
-    verifierProgressListeners.add(onProgress);
-    if (verifierProgress !== undefined) {
-      onProgress(verifierProgress);
-    }
-    return verifierLoad.finally(() => verifierProgressListeners.delete(onProgress));
-  };
   const checkCompatibility = createCachedAsyncLoader(() =>
     startRequest<string[]>(
       (requestId) => ({ requestId, type: "checkCompatibility" }),
@@ -181,11 +142,10 @@ export const createImageProcessor = (worker: ImageProcessorWorker): ImageProcess
       hasRequestedRendererPreload = true;
       worker.postMessage({ type: "initializeRenderer" });
     },
-    preloadVerifier,
     renderImage: (input) =>
       startRequest<Blob>((requestId) => ({ input, requestId, type: "render" }), pendingRenders),
     verifyWatermark: (image) =>
-      startRequest<TrustMarkDetection>(
+      startRequest<WatermarkDetection>(
         (requestId) => ({ image, requestId, type: "verify" }),
         pendingVerifications,
       ),
@@ -208,15 +168,12 @@ const getImageProcessor = (): ImageProcessor => {
 export const renderImage = (input: ImageRenderInput): Promise<Blob> =>
   getImageProcessor().renderImage(input);
 
-export const verifyWatermarkImage = (image: Blob): Promise<TrustMarkDetection> =>
+export const verifyWatermarkImage = (image: Blob): Promise<WatermarkDetection> =>
   getImageProcessor().verifyWatermark(image);
 
 export const preloadImageRenderer = (): void => {
   getImageProcessor().preloadRenderer();
 };
-
-export const preloadWatermarkVerifier = (onProgress?: (progress: number) => void): Promise<void> =>
-  getImageProcessor().preloadVerifier(onProgress);
 
 export const checkImageProcessorCompatibility = async (): Promise<string[]> => {
   if (typeof Worker !== "function") {

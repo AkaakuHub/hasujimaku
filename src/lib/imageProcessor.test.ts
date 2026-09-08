@@ -26,16 +26,6 @@ class FakeImageProcessorWorker implements ImageProcessorWorker {
       return;
     }
 
-    if (message.type === "initializeVerifier") {
-      this.listener?.({
-        data: { progress: 50, requestId: message.requestId, type: "verifierProgress" },
-      } as MessageEvent<unknown>);
-      this.listener?.({
-        data: { requestId: message.requestId, type: "verifierReady" },
-      } as MessageEvent<unknown>);
-      return;
-    }
-
     if (message.type === "verify") {
       this.listener?.({
         data: {
@@ -105,27 +95,6 @@ describe("createImageProcessor", () => {
     processor.preloadRenderer();
 
     expect(worker.messages).toEqual([{ type: "initializeRenderer" }]);
-  });
-
-  it("複数回呼ばれても検証用の初期化要求を一度だけ送る", async () => {
-    const worker = new FakeImageProcessorWorker();
-    const processor = createImageProcessor(worker);
-
-    const firstPreload = processor.preloadVerifier();
-    const secondPreload = processor.preloadVerifier();
-
-    expect(firstPreload).toBe(secondPreload);
-    await expect(firstPreload).resolves.toBeUndefined();
-    expect(worker.messages).toEqual([{ requestId: 0, type: "initializeVerifier" }]);
-  });
-
-  it("検証モデルのダウンロード率を呼び出し元へ通知する", async () => {
-    const processor = createImageProcessor(new FakeImageProcessorWorker());
-    const progress: number[] = [];
-
-    await processor.preloadVerifier((value) => progress.push(value));
-
-    expect(progress).toEqual([50]);
   });
 
   it("生成結果をPNGのBlobに変換する", async () => {

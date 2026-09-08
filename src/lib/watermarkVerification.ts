@@ -1,8 +1,8 @@
-import type { TrustMarkDetection } from "./trustMark";
+import type { WatermarkDetection } from "./imageWatermark";
 
-export type VerifyWatermarkImage = (image: Blob) => Promise<TrustMarkDetection>;
+export type VerifyWatermarkImage = (image: Blob) => Promise<WatermarkDetection>;
 
-export interface WatermarkVerificationResult extends TrustMarkDetection {
+export interface WatermarkVerificationResult extends WatermarkDetection {
   fileName: string;
 }
 

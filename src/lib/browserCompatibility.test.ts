@@ -8,7 +8,7 @@ describe("getUnsupportedBrowserFeatures", () => {
       getUnsupportedBrowserFeatures({
         createImageBitmap: true,
         offscreenCanvas: true,
-        webAssemblySimd: true,
+        webAssembly: true,
       }),
     ).toEqual([]);
   });
@@ -18,8 +18,8 @@ describe("getUnsupportedBrowserFeatures", () => {
       getUnsupportedBrowserFeatures({
         createImageBitmap: false,
         offscreenCanvas: false,
-        webAssemblySimd: false,
+        webAssembly: false,
       }),
-    ).toEqual(["WebAssembly SIMD", "OffscreenCanvas", "createImageBitmap"]);
+    ).toEqual(["WebAssembly", "OffscreenCanvas", "createImageBitmap"]);
   });
 });

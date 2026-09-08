@@ -1,12 +1,9 @@
 import { getCanvasSize, getSubtitleLayout } from "../components/imageCanvas/renderLayout";
-import { createCachedAsyncLoader } from "../lib/createCachedAsyncLoader";
 import type { ImageRenderInput } from "../lib/imageProcessorMessages";
-import { embedTrustMark, initializeTrustMarkEncoder } from "../lib/trustMarkRuntime";
+import { embedImageWatermark } from "../lib/imageWatermark";
 import { createSvgRenderer, initializeSvgRenderer } from "./svgRenderer";
 
-export const initializeImageRenderer = createCachedAsyncLoader(async () => {
-  await Promise.all([initializeSvgRenderer(), initializeTrustMarkEncoder()]);
-});
+export const initializeImageRenderer = initializeSvgRenderer;
 
 const escapeXmlAttribute = (value: string): string =>
   value.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
@@ -83,7 +80,7 @@ export const renderImage = async (input: ImageRenderInput): Promise<ArrayBuffer>
     const image = renderer.render();
     try {
       const pixels = new Uint8ClampedArray(image.pixels);
-      await embedTrustMark(pixels, image.width, image.height);
+      embedImageWatermark(pixels, image.width, image.height);
       const canvas = new OffscreenCanvas(image.width, image.height);
       const context = canvas.getContext("2d");
       if (!context) {

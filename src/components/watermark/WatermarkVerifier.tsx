@@ -2,44 +2,14 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
 
 import ImageSelectButton from "../design/ImageSelectButton";
-import { preloadWatermarkVerifier, verifyWatermarkImage } from "../../lib/imageProcessor";
+import { verifyWatermarkImage } from "../../lib/imageProcessor";
 import { type WatermarkVerificationResult, verifyWatermark } from "../../lib/watermarkVerification";
 
 const WatermarkVerifier = () => {
-  const [isModelLoading, setIsModelLoading] = useState(true);
-  const [modelDownloadProgress, setModelDownloadProgress] = useState<number | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<WatermarkVerificationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    void preloadWatermarkVerifier((progress) => {
-      if (active) {
-        setModelDownloadProgress(progress);
-      }
-    })
-      .catch((modelError: unknown) => {
-        if (active) {
-          setError(
-            modelError instanceof Error
-              ? modelError.message
-              : "透かしモデルを読み込めませんでした。",
-          );
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setIsModelLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(
     () => () => {
@@ -101,21 +71,6 @@ const WatermarkVerifier = () => {
               }}
             />
           </ImageSelectButton>
-          {isModelLoading && (
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-              <CircularProgress
-                size={24}
-                aria-label="検証モデルを読み込み中"
-                variant={modelDownloadProgress === null ? "indeterminate" : "determinate"}
-                value={modelDownloadProgress ?? undefined}
-              />
-              <Typography variant="body2">
-                {modelDownloadProgress === null
-                  ? "検証モデルを読み込んでいます。"
-                  : `検証モデルを読み込んでいます。${modelDownloadProgress}%`}
-              </Typography>
-            </Stack>
-          )}
           {previewUrl && (
             <Box
               component="img"
